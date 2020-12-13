@@ -1,11 +1,16 @@
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-import re
-from nltk import *
 import os.path
 
+from nltk import *
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from Logger import *
 #nltk.download() #todo how to get this to run once?
 
 class sanitization():
+    """
+    This class is used to sanitize a given corpus of data. In turn removing stop words, stemming words, removing small
+    words, removing no alphabet words, and setting words to lower case. To save on repeat runs a local copy of the
+    serialised corpus is saved that is used unless this feature is overwritten.
+    """
 
     def sanitize(self, text, force_new_data_and_dont_persisit = False):
         """
@@ -19,7 +24,7 @@ class sanitization():
 
         # If a file exists don't sanitize given text
         if os.path.isfile(sanitize_file_name) and not force_new_data_and_dont_persisit:
-            print("Sanitized file exists. Using data")
+            logger.print_message("Sanitized file exists. Using data")
 
             with open(sanitize_file_name, 'r', encoding="utf8") as file_to_write:
                 final_text = file_to_write.read()
@@ -27,7 +32,7 @@ class sanitization():
         else:
             total_words = len(text.split(" "))
             number = 0
-            print("Starting sanitization... {} words to go".format(total_words))
+            logger.print_message("Starting sanitization... {} words to go".format(total_words))
             for word in text.split(" "):
                 number = number + 1
                 word = self.remove_non_alpha(word)
@@ -40,7 +45,7 @@ class sanitization():
                     continue
 
                 final_text = final_text + word + " "
-                print("Completed {} of {} sanitized words".format(number, total_words))
+                logger.print_message("Completed {} of {} sanitized words".format(number, total_words))
 
             final_text = final_text.replace("  "," ")
 
@@ -48,16 +53,19 @@ class sanitization():
                 with open(sanitize_file_name, 'w', encoding="utf8") as file_to_write:
                     file_to_write.write(final_text)
 
+        final_text = final_text.strip()
         return final_text
 
     def stemmer(self, word):
         """
         Get stemms of words
         :param word:
-        :return:
+        :return: the stemmed word using port stemmer
         """
 
         porter = PorterStemmer()
+
+        # todo anouther stemmer be assessed?
         #lancaster = LancasterStemmer()
         #stemmed_word = lancaster.stem(word)
         stemmed_word = porter.stem(word)
@@ -68,7 +76,7 @@ class sanitization():
         """
         get the lower case representation of words
         :param word:
-        :return:
+        :return: the lowercase representation of the word
         """
         return word.lower()
 
@@ -76,7 +84,7 @@ class sanitization():
         """
         Remove stop words
         :param text:
-        :return:
+        :return: the word without stop words
         """
 
         text_without_stopwords = [word for word in text.split() if word not in ENGLISH_STOP_WORDS]
@@ -92,20 +100,20 @@ class sanitization():
         """
         Removes non alphabet characters (Excluding spaces)
         :param word:
-        :return:
+        :return: the word with non-alpha characters removed
         """
         word = word.replace("\n"," ").replace("\t", " ").replace("  ", " ")
         regex = re.compile('[^a-zA-Z ]')
-        # First parameter is the replacement, second parameter is your input string
+
         return regex.sub('', word)
-        # Out: 'abdE'
+
 
     def remove_small_words(self, word, length_to_remove_if_not_equal = 4):
         """
         Removes words that are too small, defaults to words words length 3 characters or below which are removed.
         :param word:
         :param length_to_remove_if_not_equal:
-        :return: "" if word below 3 characters or the word
+        :return: "" if word below 3 characters or the word if above
         """
 
         new_word = ""

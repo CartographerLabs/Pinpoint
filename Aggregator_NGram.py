@@ -1,7 +1,13 @@
 from sklearn.feature_extraction.text import CountVectorizer
+
+from Logger import *
+
 c_vec = CountVectorizer(ngram_range=(1, 5))
 
 class n_gram_aggregator():
+    """
+    This class is used to retrieve the most common NGrams for a given dataset corpus.
+    """
 
     def _get_average_ngram_count(self, n_grams_dict):
         """
@@ -15,7 +21,7 @@ class n_gram_aggregator():
             all_count.append(ng_count)
 
         average_count = sum(all_count) / len(all_count)
-        print(all_count)
+        #print(all_count)
         return average_count
 
     def _get_all_ngrams(self, data):
@@ -78,7 +84,7 @@ class n_gram_aggregator():
         :param file_name_to_read:
         :return:
         """
-        print("Getting Ngrams")
+        logger().print_message("Getting Ngrams")
 
         if data is None and file_name_to_read is None:
             raise Exception("No data supplied to retrieve n_grams")

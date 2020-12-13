@@ -1,7 +1,10 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-
+from Logger import *
 
 class tf_idf_aggregator():
+    """
+    A wrapper class around SKlearn for retrieving TF-IDF scores.
+    """
 
     def get_tf_idf_scores(self, ngrams_vocabulary, corpus_data = None, file_name_to_read = None):
         """
@@ -11,7 +14,7 @@ class tf_idf_aggregator():
         :param file_name_to_read:
         :return: a dictionary of the pairing name and their score
         """
-        print("Getting TF IDF scores")
+        logger.print_message("Getting TF IDF scores")
 
         if corpus_data is None and file_name_to_read is None:
             raise Exception("No data supplied to retrieve n_grams")
@@ -31,6 +34,6 @@ class tf_idf_aggregator():
 
         for row, col in zip(rows, cols):
             dict_of_scores[feature_names[col]] = tfs[row, col]
-            print((feature_names[col], corpus_index[row]), tfs[row, col])
+            logger.print_message((feature_names[col], corpus_index[row]), tfs[row, col])
 
         return dict_of_scores
