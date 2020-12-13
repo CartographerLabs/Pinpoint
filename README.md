@@ -1,6 +1,6 @@
 **Note: Tooling is in development and not completed.** 
 
-Python tooling creating an extreamist classification model based on the research Understanding the [Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith](https://arxiv.org/pdf/1905.08067.pdf).
+Python tooling creating an extremism classification model based on the research Understanding the [Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith](https://arxiv.org/pdf/1905.08067.pdf).
 
 Required datasets include:
 - Extreamist magazine https://www.kaggle.com/fifthtribe/isis-religious-texts
