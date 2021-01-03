@@ -10,6 +10,7 @@ Create the following folders in the root of the Pinpoint module: ```model```, ``
 Inside of the datasets folder add an extremist, counterpoise, and baseline dataset. 
 
 ### /data-sets 
+The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/):
 - Extremist magazine https://www.kaggle.com/fifthtribe/isis-religious-texts
 - Counterpoise Tweets https://www.kaggle.com/activegalaxy/isis-related-tweets/home?select=AboutIsis.csv
 - Extremist tweets https://www.kaggle.com/fifthtribe/how-isis-uses-twitter/data
