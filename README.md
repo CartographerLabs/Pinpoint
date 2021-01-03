@@ -36,4 +36,5 @@ extractor.dump_training_data_features(r"Pinpoint\outputs\training_features.json"
 # Trains a model off the features file created in the previous stage
 model = random_forest()
 model.train_model(r"Pinpoint\outputs\training_features.json", False)
+print(model.accuracy)
 ```
