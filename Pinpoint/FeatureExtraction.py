@@ -221,7 +221,7 @@ class feature_extraction():
         # if already made model, reuse
         if self.saved_tf_idf_model is None:
 
-            tweet_data_set_name = "data-sets/religious_texts.csv"
+            tweet_data_set_name = "Pinpoint/data-sets/religious_texts.csv"
 
             data_set = ""
             with open(tweet_data_set_name, 'r', encoding='cp1252') as file:
