@@ -11,6 +11,7 @@ Inside of the datasets folder add an extremist, counterpoise, and baseline datas
 
 ### /data-sets 
 - Extremist magazine https://www.kaggle.com/fifthtribe/isis-religious-texts
+
 The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/):
 - Counterpoise Tweets https://www.kaggle.com/activegalaxy/isis-related-tweets/home?select=AboutIsis.csv
 - Extremist tweets https://www.kaggle.com/fifthtribe/how-isis-uses-twitter/data
