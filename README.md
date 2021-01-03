@@ -3,7 +3,7 @@ Pinpoint is a suite of Python tooling created to replicate the extremism classif
 
 ## Installation 
 ```shell
-python -m pip install git+https://github.com/user1342/News-Article-Text-Classification.git
+python -m pip install git+https://github.com/user1342/Pinpoint.git
 ```
 ## Setup 
 Create the following folders in the root of the Pinpoint module: ```model```, ```outputs```, ```data-sets```, and ```violent_or_curse_word_datasets```.
