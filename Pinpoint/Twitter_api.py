@@ -3,8 +3,8 @@ import re
 import sys
 import time
 import tweepy
-import Serializer
-from ConfigManager import ConfigManager
+import Pinpoint.Serializer
+from Pinpoint.ConfigManager import ConfigManager
 
 class Twitter:
     '''

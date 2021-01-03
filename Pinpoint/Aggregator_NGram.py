@@ -1,6 +1,6 @@
 from sklearn.feature_extraction.text import CountVectorizer
 
-from Logger import *
+from Pinpoint.Logger import *
 
 c_vec = CountVectorizer(ngram_range=(1, 5))
 

@@ -15,7 +15,7 @@ class logger():
         :param override_debug: a boolean on if the DEBUG status should be override. if True a log will be printed,
         irrespective of if in Debug mode.
         """
-        if logging_level > 0 or logger.DEBUG:
+        if logging_level >= 1 or logger.DEBUG:
             now = datetime.now()
             current_time = now.strftime("%H:%M:%S")
             print("{} | {}".format(current_time,message))

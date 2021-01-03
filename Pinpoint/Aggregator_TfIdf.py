@@ -1,5 +1,5 @@
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from Logger import *
+from Pinpoint.Logger import *
 
 class tf_idf_aggregator():
     """

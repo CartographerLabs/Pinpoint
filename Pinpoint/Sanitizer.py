@@ -2,7 +2,7 @@ import os.path
 
 from nltk import *
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-from Logger import *
+from Pinpoint.Logger import *
 #nltk.download() #todo how to get this to run once?
 
 class sanitization():
@@ -19,7 +19,7 @@ class sanitization():
         :param force_new_data_and_dont_persisit:
         :return: sanitized text
         """
-        sanitize_file_name = "sanitized_text.txt"
+        sanitize_file_name = r"outputs\sanitized_text.txt"
         final_text = ""
 
         # If a file exists don't sanitize given text

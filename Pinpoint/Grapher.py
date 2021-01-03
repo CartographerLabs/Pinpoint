@@ -23,6 +23,14 @@ class grapher():
         """
         self.graph.add_edge(node_1_name,node_2_name,weight=weight,relation =relationship)
 
+    def add_node(self, node_name):
+        """
+        A wrapper function that adds a node with no edges to the graph
+        :param node_name:
+        """
+        self.graph.add_node(node_name)
+
+
     def get_info(self):
         """
         Retrieves information about the graph
