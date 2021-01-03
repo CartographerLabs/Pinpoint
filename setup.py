@@ -14,7 +14,7 @@ setuptools.setup(
     long_description="Python tooling creating an extremism classification model based on the research Understanding the Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith.",
     long_description_content_type="text/markdown",
     url="https://github.com/user1342/Pinpoint",
-    packages=["news_classification"],
+    packages=["Pinpoint"],
     include_package_data=True,
     classifiers=[
         "Programming Language :: Python :: 3",
