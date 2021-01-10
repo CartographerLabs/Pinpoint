@@ -1,13 +1,13 @@
 import json
 import os
+import pickle
 
 import pandas
-from sklearn.model_selection import train_test_split
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import metrics
-
 import pandas as pd
-import pickle
+from sklearn import metrics
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import train_test_split
+
 
 class random_forest():
     """
@@ -20,12 +20,17 @@ class random_forest():
     outputs_folder = None
     model_folder = None
 
-    def __init__(self, outputs_folder = "Pinpoint/outputs", model_folder = "Pinpoint/model"):
+    def __init__(self, outputs_folder="Pinpoint/outputs", model_folder="Pinpoint/model"):
+        """
+        Constructor
+
+        The random_forest() class can be initialised with outputs_folder() and model_folder(). The outputs folder is
+        where output files are stored and the model folder is where the model will be created if not overwritten.
+        """
         self.outputs_folder = outputs_folder
         self.model_folder = model_folder
 
-
-    def get_features_as_df(self, features_file, force_new_dataset = True):
+    def get_features_as_df(self, features_file, force_new_dataset=True):
         """
         Reads a JSON file file and converts to a Pandas dataframe that can be used to train and test the classifier.
         :param features_file: the location of the JSON features file to convert to a dataframe
@@ -34,10 +39,10 @@ class random_forest():
         """
 
         column_names = ["post_freq", "follower_freq", "cap_freq", "violent_freq",
-                     "centrality",'is_extremist',"clout","analytic","tone","authentic"]
+                        "centrality", 'is_extremist', "clout", "analytic", "tone", "authentic"]
 
         # Add the two hundred vectors columns
-        for iterator in range(1,201):
+        for iterator in range(1, 201):
             column_names.append("message_vector_{}".format(iterator))
 
         # Creates the columns for the data frame
@@ -73,17 +78,19 @@ class random_forest():
                         authentic = feature_data['authentic']
 
                         row = [post_freq, follower_freq, cap_freq, violent_freq,
-                               centrality,is_extremist,clout,analytic,tone,authentic]+ message_vector
+                               centrality, is_extremist, clout, analytic, tone, authentic] + message_vector
                         try:
-                            df.loc[iterator]= row
+                            df.loc[iterator] = row
                         except ValueError as e:
                             error_count = error_count + 1
-                            pass # if error with value probably column mismatch which is down to taking a mesage with no data
+                            pass  # if error with value probably column mismatch which is down to taking a mesage with no data
 
                         iterator = iterator + 1
                     completed_features = completed_features + 1
                     user_name = list(message.keys())[0]
-                    print("Added a message from user {} to data frame - {} messages of {} completed".format(user_name, completed_features, number_of_features))
+                    print("Added a message from user {} to data frame - {} messages of {} completed".format(user_name,
+                                                                                                            completed_features,
+                                                                                                            number_of_features))
 
                 print("Total errors when creating data frame: {}".format(error_count))
 
@@ -99,7 +106,7 @@ class random_forest():
 
         return df
 
-    def train_model(self, features_file, force_new_dataset = True, model_location = None):
+    def train_model(self, features_file, force_new_dataset=True, model_location=None):
         """
         Trains the model of the proveded data unless the model file already exists or if the force new dataset flag is True.
         :param features_file: the location of the feature file to be used to train the model
@@ -109,7 +116,7 @@ class random_forest():
 
         # Sets model location based on default folder location and placeholder name if none was given
         if model_location is None:
-            model_location = os.path.join(self.model_folder,"predictor.model")
+            model_location = os.path.join(self.model_folder, "predictor.model")
 
         # if told to force the creation of a new dataset to train off or the model location does not exist then make a new model
         if force_new_dataset or not os.path.isfile(model_location):
@@ -118,11 +125,11 @@ class random_forest():
             feature_data = self.get_features_as_df(features_file, force_new_dataset)
 
             # Removes index column
-            feature_data.drop(feature_data.columns[0],axis=1,inplace=True)
+            feature_data.drop(feature_data.columns[0], axis=1, inplace=True)
             feature_data.reset_index(drop=True, inplace=True)
 
             y = feature_data[['is_extremist']]  # Labels
-            X = feature_data.drop(axis=1,labels=['is_extremist'])  # Features
+            X = feature_data.drop(axis=1, labels=['is_extremist'])  # Features
 
             # Split dataset into training set and test set
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)  # 70% training and 30% test
@@ -144,7 +151,7 @@ class random_forest():
             self.model = clf
 
             # write model and accuracy to file to file
-            pickle.dump({"model":self.model,"accuracy":self.accuracy}, open(model_location, "wb"))
+            pickle.dump({"model": self.model, "accuracy": self.accuracy}, open(model_location, "wb"))
 
         else:
             # Read model and accuracy from file

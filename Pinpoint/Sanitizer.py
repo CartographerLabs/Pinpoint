@@ -2,8 +2,16 @@ import os.path
 
 from nltk import *
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+
 from Pinpoint.Logger import *
-#nltk.download() #todo how to get this to run once?
+
+# If NLTK data doesn't exist, downloads it
+try:
+    tagged = pos_tag("test")
+except LookupError:
+    download()
+
+# nltk.download() #todo how to get this to run once?
 
 class sanitization():
     """
@@ -12,7 +20,7 @@ class sanitization():
     serialised corpus is saved that is used unless this feature is overwritten.
     """
 
-    def sanitize(self, text, output_folder, force_new_data_and_dont_persisit = False):
+    def sanitize(self, text, output_folder, force_new_data_and_dont_persisit=False):
         """
         Entry function for sanitizing text
         :param text:
@@ -47,7 +55,7 @@ class sanitization():
                 final_text = final_text + word + " "
                 logger.print_message("Completed {} of {} sanitized words".format(number, total_words))
 
-            final_text = final_text.replace("  "," ")
+            final_text = final_text.replace("  ", " ")
 
             if not force_new_data_and_dont_persisit:
                 with open(sanitize_file_name, 'w', encoding="utf8") as file_to_write:
@@ -66,8 +74,8 @@ class sanitization():
         porter = PorterStemmer()
 
         # todo anouther stemmer be assessed?
-        #lancaster = LancasterStemmer()
-        #stemmed_word = lancaster.stem(word)
+        # lancaster = LancasterStemmer()
+        # stemmed_word = lancaster.stem(word)
         stemmed_word = porter.stem(word)
 
         return stemmed_word
@@ -92,7 +100,7 @@ class sanitization():
         final_string = ""
 
         for word in text_without_stopwords:
-            final_string = final_string+ word+ " "
+            final_string = final_string + word + " "
 
         return final_string
 
@@ -102,13 +110,12 @@ class sanitization():
         :param word:
         :return: the word with non-alpha characters removed
         """
-        word = word.replace("\n"," ").replace("\t", " ").replace("  ", " ")
+        word = word.replace("\n", " ").replace("\t", " ").replace("  ", " ")
         regex = re.compile('[^a-zA-Z ]')
 
         return regex.sub('', word)
 
-
-    def remove_small_words(self, word, length_to_remove_if_not_equal = 4):
+    def remove_small_words(self, word, length_to_remove_if_not_equal=4):
         """
         Removes words that are too small, defaults to words words length 3 characters or below which are removed.
         :param word:

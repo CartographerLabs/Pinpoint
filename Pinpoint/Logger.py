@@ -8,7 +8,7 @@ class logger():
     DEBUG = False
 
     @staticmethod
-    def print_message(message, logging_level = 0):
+    def print_message(message, logging_level=0):
         """
         A  wrapper function around the Python print function used to only print
         :param message: the message to print
@@ -18,4 +18,4 @@ class logger():
         if logging_level >= 1 or logger.DEBUG:
             now = datetime.now()
             current_time = now.strftime("%H:%M:%S")
-            print("{} | {}".format(current_time,message))
+            print("{} | {}".format(current_time, message))

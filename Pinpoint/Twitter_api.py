@@ -2,9 +2,11 @@ import datetime
 import re
 import sys
 import time
+
 import tweepy
-import Pinpoint.Serializer
+
 from Pinpoint.ConfigManager import ConfigManager
+
 
 class Twitter:
     '''
@@ -27,7 +29,7 @@ class Twitter:
         auth.set_access_token(access_token, access_token_secret)
         self.tweepy_api = tweepy.API(auth)
 
-    def get_tweet(self, tweet_info, attempts = 1):
+    def get_tweet(self, tweet_info, attempts=1):
         '''
         returns a list of up to two tweets. This is because the provided tweet could be a quoted tweet. If this is the case
         we take that as two seperate tweets. Otherwise one tweet is returned with the necessary extracted data.
@@ -88,7 +90,9 @@ class Twitter:
                     quoted_date = quoted_tweet_info.created_at.timestamp()
 
                     # As this function can return two tweets (i.e. a quoted tweet and normal tweet) the tweets are added to a list
-                    list_of_tweets.append(Serializer.createPostDict(date=quoted_date, post_text=quoted_tweet_text, likes=quoted_likes, comments='', shares=quoted_retweets, source=quoted_source))
+                    list_of_tweets.append(
+                        Serializer.createPostDict(date=quoted_date, post_text=quoted_tweet_text, likes=quoted_likes,
+                                                  comments='', shares=quoted_retweets, source=quoted_source))
                 except AttributeError as e:
                     print("Tweepy Twitter api error. On attempt {} \n {}".format(attempts, e))
                     pass
@@ -96,12 +100,14 @@ class Twitter:
             # As this function can return two tweets (i.e. a quoted tweet and normal tweet) the tweets are added to a list
 
             if tweet is not None:
-                list_of_tweets.append(Serializer.createPostDict(date=date, post_text=tweet, likes=likes, comments='', shares=retweets, source=source))
+                list_of_tweets.append(
+                    Serializer.createPostDict(date=date, post_text=tweet, likes=likes, comments='', shares=retweets,
+                                              source=source))
 
         except tweepy.RateLimitError as e:
             print("Tweepy Twitter api rate limit reached. On attempt {} \n {}".format(attempts, e))
             time.sleep(300)
-            return self.get_tweet(tweet_info, attempts + 1) # if error, try again.
+            return self.get_tweet(tweet_info, attempts + 1)  # if error, try again.
 
         except tweepy.TweepError as e:
             print("Tweepy Twitter api error. On attempt {} \n {}".format(attempts, e))
@@ -109,7 +115,7 @@ class Twitter:
 
         return list_of_tweets
 
-    def get_posts(self, username, attempts = 1):
+    def get_posts(self, username, attempts=1):
         '''
         Loops through all tweets for the provided user
         :param username:
@@ -137,7 +143,7 @@ class Twitter:
         except tweepy.error.TweepError as e:
             print("Tweepy Twitter api error on user {}. On Attempt {} .\n {}".format(username, attempts, e))
             time.sleep(300)
-            return self.get_posts(username, sys.maxsize) #Unlinkely to be an error that can be fixed by waiting
+            return self.get_posts(username, sys.maxsize)  # Unlinkely to be an error that can be fixed by waiting
 
         return list_of_tweets
 
@@ -190,7 +196,7 @@ class Twitter:
         current_date = datetime.datetime.now()
         elapse_time = current_date - created_at_time
 
-        frequency = number_of_posts/elapse_time.days
+        frequency = number_of_posts / elapse_time.days
 
         return frequency
 
@@ -204,6 +210,6 @@ class Twitter:
         followers_count = user.followers_count
         following_count = user.friends_count
 
-        ration = following_count/followers_count
+        ration = following_count / followers_count
 
         return ration

@@ -1,12 +1,14 @@
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+
 from Pinpoint.Logger import *
+
 
 class tf_idf_aggregator():
     """
     A wrapper class around SKlearn for retrieving TF-IDF scores.
     """
 
-    def get_tf_idf_scores(self, ngrams_vocabulary, corpus_data = None, file_name_to_read = None):
+    def get_tf_idf_scores(self, ngrams_vocabulary, corpus_data=None, file_name_to_read=None):
         """
         Used to generate a TF IDF score based of a vocabulary of Ngrams and a data corpus.
         :param ngrams_vocabulary:
@@ -23,7 +25,7 @@ class tf_idf_aggregator():
             with open(file_name_to_read, 'r') as file_to_read:
                 corpus_data = file_to_read.read()
 
-        tfidf = TfidfVectorizer(vocabulary = ngrams_vocabulary, stop_words = 'english', ngram_range=(1,2))
+        tfidf = TfidfVectorizer(vocabulary=ngrams_vocabulary, stop_words='english', ngram_range=(1, 2))
         tfs = tfidf.fit_transform([corpus_data])
 
         feature_names = tfidf.get_feature_names()

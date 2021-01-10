@@ -1,5 +1,6 @@
 from gensim.models import Word2Vec
 
+
 class word_2_vec_aggregator():
     """
     A wrapper function around gensim used for creating a word 2 vec model
@@ -22,8 +23,9 @@ class word_2_vec_aggregator():
 
             list_of_sentences_in_nested_list.append(sentence.split(" "))
 
-        model = Word2Vec(min_count=1, window=5) #vector size of 100 and window size of 5?
+        model = Word2Vec(min_count=1, window=5)  # vector size of 100 and window size of 5?
         model.build_vocab(list_of_sentences_in_nested_list)  # prepare the model vocabulary
-        model.train(list_of_sentences_in_nested_list, total_examples=model.corpus_count, epochs=model.iter)  # train word vectors
+        model.train(list_of_sentences_in_nested_list, total_examples=model.corpus_count,
+                    epochs=model.iter)  # train word vectors
 
         return model

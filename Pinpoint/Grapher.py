@@ -1,5 +1,6 @@
 import networkx as nx
 
+
 class grapher():
     """
     A wrapper class used for generating a graph for interactions between users
@@ -21,7 +22,7 @@ class grapher():
         :param relationship:
         :return:
         """
-        self.graph.add_edge(node_1_name,node_2_name,weight=weight,relation =relationship)
+        self.graph.add_edge(node_1_name, node_2_name, weight=weight, relation=relationship)
 
     def add_node(self, node_name):
         """
@@ -29,7 +30,6 @@ class grapher():
         :param node_name:
         """
         self.graph.add_node(node_name)
-
 
     def get_info(self):
         """
@@ -55,6 +55,6 @@ class grapher():
         return centrality[user_name]
 
     # todo implement
-    #def get_eigenvector_centrality_for_user(self, user_name):
+    # def get_eigenvector_centrality_for_user(self, user_name):
     #    centrality = nx.eigenvector_centrality(self.graph)
     #    return centrality[user_name]

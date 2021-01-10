@@ -4,6 +4,7 @@ from Pinpoint.Logger import *
 
 c_vec = CountVectorizer(ngram_range=(1, 5))
 
+
 class n_gram_aggregator():
     """
     This class is used to retrieve the most common NGrams for a given dataset corpus.
@@ -21,7 +22,7 @@ class n_gram_aggregator():
             all_count.append(ng_count)
 
         average_count = sum(all_count) / len(all_count)
-        #print(all_count)
+        # print(all_count)
         return average_count
 
     def _get_all_ngrams(self, data):
@@ -47,7 +48,7 @@ class n_gram_aggregator():
         bi_grams = {}
         tri_grams = {}
 
-        for ng_count, ng_text in sorted([(count_values[i],k) for k,i in vocab.items()], reverse=True):
+        for ng_count, ng_text in sorted([(count_values[i], k) for k, i in vocab.items()], reverse=True):
             sentence_length = len(ng_text.split(" "))
 
             if sentence_length == 3:
@@ -57,7 +58,7 @@ class n_gram_aggregator():
             elif sentence_length == 1:
                 uni_grams[ng_text] = ng_count
 
-        return uni_grams,bi_grams,tri_grams
+        return uni_grams, bi_grams, tri_grams
 
     def _get_popular_ngrams(self, ngrams_dict):
         """
@@ -76,7 +77,7 @@ class n_gram_aggregator():
                 popular_ngrams[n_gram] = ng_count
         return popular_ngrams
 
-    def get_ngrams(self, data = None, file_name_to_read = None):
+    def get_ngrams(self, data=None, file_name_to_read=None):
         """
         Wrapper function for returning uni, bi, and tri grams that are the most popular (above the average weighting in
         a given piece of text).
@@ -89,14 +90,14 @@ class n_gram_aggregator():
         if data is None and file_name_to_read is None:
             raise Exception("No data supplied to retrieve n_grams")
 
-        if data is None and file_name_to_read is not  None:
+        if data is None and file_name_to_read is not None:
             with open(file_name_to_read, 'r') as file_to_read:
                 data = file_to_read.read()
 
-        uni_grams,bi_grams,tri_grams = self._get_all_ngrams(data)
+        uni_grams, bi_grams, tri_grams = self._get_all_ngrams(data)
 
         popular_uni_grams = list(self._get_popular_ngrams(uni_grams).keys())
         popular_bi_grams = list(self._get_popular_ngrams(bi_grams).keys())
         popular_tri_grams = list(self._get_popular_ngrams(tri_grams).keys())
 
-        return popular_uni_grams,popular_bi_grams,popular_tri_grams
+        return popular_uni_grams, popular_bi_grams, popular_tri_grams

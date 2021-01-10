@@ -38,7 +38,7 @@ class wording_choice_aggregator():
             with open(os.path.join(dataset_folder, filename), 'r') as file:
 
                 for line in file.readlines():
-                    line = line.strip().replace("\n", " ").replace(",","")
+                    line = line.strip().replace("\n", " ").replace(",", "")
                     list_of_violent_or_curse_words.append(line)
 
         number_of_swear_words = 0

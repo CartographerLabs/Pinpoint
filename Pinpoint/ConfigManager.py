@@ -8,7 +8,6 @@ class ConfigManager:
 
     @staticmethod
     def _get_config(config_path):
-
         if Path(config_path).is_file() == False:
             raise Exception("The {} config file was not found.".format(config_path))
 

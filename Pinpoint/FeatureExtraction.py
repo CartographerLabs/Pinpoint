@@ -2,9 +2,9 @@ import csv
 import json
 import os
 import re
-import uuid
 
 import pandas as pd
+import uuid
 
 from Pinpoint.Aggregator_NGram import n_gram_aggregator
 from Pinpoint.Aggregator_TfIdf import tf_idf_aggregator
@@ -24,16 +24,16 @@ class feature_extraction():
 
     # A graph used to store connections between aggregated users
     graph = grapher()
-    archived_graphs = [] # an archive of the previous graphs
+    archived_graphs = []  # an archive of the previous graphs
     # A list storing dictionaries of user ids and their features.
     tweet_user_features = []
-    completed_tweet_user_features = [] # has centrality added
+    completed_tweet_user_features = []  # has centrality added
     # the global TF IDF model used for the Word 2 Vec model
     saved_tf_idf_model = None
     # A dictionary used for the translation of actual Twitter username to UUID
     dict_of_users = {}
 
-    MAX_RECORD_SIZE = 1000 #todo sys.maxsize
+    MAX_RECORD_SIZE = 3050  # todo sys.maxsize
     SHOULD_USE_LIWC = True
 
     # Datasets for training
@@ -49,11 +49,17 @@ class feature_extraction():
     DEFAULT_AUTHENTIC_COLUMN_ID = 4
     DEFAULT_TONE_COLUMN_ID = 5
 
-    def __init__(self, violent_words_dataset_location = r"Pinpoint/violent_or_curse_word_datasets"
-                 , tf_idf_training_dataset_location= r"Pinpoint/data-sets/religious_texts.csv",
-                 outputs_location =r"Pinpoint/outputs"):
+    def __init__(self, violent_words_dataset_location=r"Pinpoint/violent_or_curse_word_datasets"
+                 , tf_idf_training_dataset_location=r"Pinpoint/data-sets/religious_texts.csv",
+                 outputs_location=r"Pinpoint/outputs"):
         """
         Constructor
+
+        The feature_extraction() class can be initialised with violent_words_dataset_location,
+        tf_idf_training_dataset_location, and outputs_location locations. All files in the violent_words_dataset_location
+        will be read (one line at a time) and added to the corpus of violent and swear words. The csv file at
+        tf_idf_training_dataset_location should have a column at position 5 which contains data to train the TF IDF
+        model against.
         """
 
         self.violent_words_dataset_location = violent_words_dataset_location
@@ -161,7 +167,8 @@ class feature_extraction():
         :param message: a string representation of a social media message
         :return: The frequency of violent words in the message
         """
-        return wording_choice_aggregator().get_frequency_of_violent_or_curse_words(message, self.violent_words_dataset_location)
+        return wording_choice_aggregator().get_frequency_of_violent_or_curse_words(message,
+                                                                                   self.violent_words_dataset_location)
 
     def _get_tweet_vector(self, message):
         """
@@ -226,12 +233,12 @@ class feature_extraction():
         self._add_to_graph(user_name, message)
 
         features_dict = {"post_freq": 0,
-                # self.set_post_frequency(user_name), # todo post frequency data is not available in the dataset
-                "follower_freq": 0,
-                # self.set_follower_following_frequency(user_name), # todo post follow data is not available in the dataset
-                "cap_freq": self._get_capitalised_word_frequency(message),
-                "violent_freq": self._get_violent_word_frequency(message),
-                "message_vector": self._get_tweet_vector(message)}
+                         # self.set_post_frequency(user_name), # todo post frequency data is not available in the dataset
+                         "follower_freq": 0,
+                         # self.set_follower_following_frequency(user_name), # todo post follow data is not available in the dataset
+                         "cap_freq": self._get_capitalised_word_frequency(message),
+                         "violent_freq": self._get_violent_word_frequency(message),
+                         "message_vector": self._get_tweet_vector(message)}
 
         return features_dict
 
@@ -259,7 +266,7 @@ class feature_extraction():
                         continue
 
                     # take quote from dataset and add it to dataset
-                    message = row[5] # data column
+                    message = row[5]  # data column
                     data_set = data_set + message + "/n"
 
             # clean data set
@@ -281,7 +288,7 @@ class feature_extraction():
 
         return model
 
-    def open_wrapper(self, location, access_type, list_of_encodings = ["utf-8",'latin-1']):
+    def open_wrapper(self, location, access_type, list_of_encodings=["utf-8", 'latin-1']):
         """
         A wrapper around the open built in function that has fallbacks for different encodings.
         :return:
@@ -300,12 +307,15 @@ class feature_extraction():
             except LookupError as e:
                 continue
 
-        raise Exception("No valid encoding provided for file: '{}'. Encodings provided: '{}'".format(location, list_of_encodings))
+        raise Exception(
+            "No valid encoding provided for file: '{}'. Encodings provided: '{}'".format(location, list_of_encodings))
 
-    def _get_type_of_message_data(self, data_set_location, username_column_number= DEFAULT_USERNAME_COLUMN_ID,
-                                  message_column_number = DEFAULT_MESSAGE_COLUMN_ID, has_header = True, is_extremist = None,
-                                  clout_column_number = DEFAULT_CLOUT_COLUMN_ID, analytic_column_number = DEFAULT_ANALYTIC_COLUMN_ID,
-                                  tone_column_number = DEFAULT_TONE_COLUMN_ID, authentic_column_number = DEFAULT_AUTHENTIC_COLUMN_ID):
+    def _get_type_of_message_data(self, data_set_location, username_column_number=DEFAULT_USERNAME_COLUMN_ID,
+                                  message_column_number=DEFAULT_MESSAGE_COLUMN_ID, has_header=True, is_extremist=None,
+                                  clout_column_number=DEFAULT_CLOUT_COLUMN_ID,
+                                  analytic_column_number=DEFAULT_ANALYTIC_COLUMN_ID,
+                                  tone_column_number=DEFAULT_TONE_COLUMN_ID,
+                                  authentic_column_number=DEFAULT_AUTHENTIC_COLUMN_ID):
 
         # Counts the total rows in the CSV. Used for progress reporting.
         with self.open_wrapper(data_set_location, 'r') as file:
@@ -349,10 +359,10 @@ class feature_extraction():
                     authentic = 0
 
                 liwc_dict = {
-                    "clout":clout,
+                    "clout": clout,
                     "analytic": analytic,
                     "tone": tone,
-                    "authentic":authentic
+                    "authentic": authentic
                 }
 
                 # Retrieve Tweet for message
@@ -363,10 +373,12 @@ class feature_extraction():
 
                 # clean/ remove markup in dataset
                 tweet = tweet.replace("ENGLISH TRANSLATION:", "")
-                sanitised_message = sanitization().sanitize(tweet, self.outputs_location, force_new_data_and_dont_persisit=True)
+                sanitised_message = sanitization().sanitize(tweet, self.outputs_location,
+                                                            force_new_data_and_dont_persisit=True)
 
                 # If no message skip entry
-                if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(sanitised_message.split(" ")) > 0:
+                if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
+                        sanitised_message.split(" ")) > 0:
                     continue
 
                 # Process Tweet and save as dict
@@ -385,7 +397,7 @@ class feature_extraction():
                 self.tweet_user_features.append({user_unique_id: tweet_dict})
 
                 logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
-                      .format(user_unique_id, data_set_location, current_processed_rows,row_count), 1)
+                                       .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
 
         # Add the centrality (has to be done after all users are added to graph)
         completed_tweet_user_features = []
@@ -397,15 +409,15 @@ class feature_extraction():
                 updated_entry[user_id] = entry[user_id]
                 # Adds centrality
                 updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
-                logger().print_message("Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id),1)
+                logger().print_message(
+                    "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
                 completed_tweet_user_features.append(updated_entry)
-                break # Only one entry per list
+                break  # Only one entry per list
 
         self.completed_tweet_user_features = self.completed_tweet_user_features + completed_tweet_user_features
         self.tweet_user_features = []
         self.archived_graphs.append(self.graph)
         self.graph = grapher()
-
 
     def _get_extremist_data(self, dataset_location):
         """
@@ -413,18 +425,18 @@ class feature_extraction():
         saving them to a file for a model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location,is_extremist=True)
+        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=True)
 
-    def _get_counterpoise_data(self,dataset_location):
+    def _get_counterpoise_data(self, dataset_location):
         """
         This function is responsible for aggregating tweets from the counterpoise (related to the topic but from
         legitimate sources, e.g. news outlets) dataset, extracting the features, and saving them to a file for a
         model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location,is_extremist=False)
+        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False)
 
-    def _get_standard_tweets(self,dataset_location):
+    def _get_standard_tweets(self, dataset_location):
         """
         This function is responsible for aggregating tweets from the baseline (random sample of twitter posts)
         dataset, extracting the features, and saving them to a file for a model to be created.
@@ -432,9 +444,8 @@ class feature_extraction():
 
         self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False)
 
-
     def dump_features_for_list_of_datasets(self, feature_file_path_to_save_to, list_of_dataset_locations,
-                                           force_new_dataset = True):
+                                           force_new_dataset=True):
         """
         Saves features representing a provided dataset to a json file. Designed to be used for testing after a
         model has been created.
@@ -447,7 +458,6 @@ class feature_extraction():
 
         if force_new_dataset or not os.path.isfile(feature_file_path_to_save_to):
             for dataset in list_of_dataset_locations:
-
                 self._get_type_of_message_data(data_set_location=dataset, is_extremist=None)
 
             with open(feature_file_path_to_save_to, 'w') as outfile:
@@ -460,9 +470,9 @@ class feature_extraction():
             # parse file
             self.completed_tweet_user_features = json.loads(data)
 
-
-    def dump_training_data_features(self, feature_file_path_to_save_to, extremist_data_location, counterpoise_data_location,
-                                    baseline_data_location, force_new_dataset = True):
+    def dump_training_data_features(self, feature_file_path_to_save_to, extremist_data_location,
+                                    counterpoise_data_location,
+                                    baseline_data_location, force_new_dataset=True):
         """
         The entrypoint function, used to dump all features, for all users in the extreamist, counterpoise, and baseline
         datsets to a json file.
@@ -472,11 +482,9 @@ class feature_extraction():
         self._reset_stored_feature_data()
 
         if force_new_dataset or not os.path.isfile(feature_file_path_to_save_to):
-
             self._get_extremist_data(extremist_data_location)
             self._get_counterpoise_data(counterpoise_data_location)
             self._get_standard_tweets(baseline_data_location)
 
             with open(feature_file_path_to_save_to, 'w') as outfile:
                 json.dump(self.completed_tweet_user_features, outfile, indent=4)
-
