@@ -6,11 +6,11 @@ Pinpoint is a suite of Python tooling created to replicate the extremism classif
 python -m pip install git+https://github.com/user1342/Pinpoint.git
 ```
 ## Setup 
-Create the following folders in the root of the Pinpoint module: ```model```, ```outputs```, ```data-sets```, and ```violent_or_curse_word_datasets```.
-Inside of the datasets folder add an extremist, counterpoise, and baseline dataset. 
+The ```feature_extraction()``` class can be initialised with ```violent_words_dataset_location```, ```tf_idf_training_dataset_location```, and ```outputs_location``` locations. All files in the ```violent_words_dataset_location``` will be read (one line at a time) and added to the corpus of violent and swear words. The csv file at ```tf_idf_training_dataset_location``` should have a column at position 5 which contains data to train the TF IDF model against. THe ```outputs_location``` folder is where files created by the tooling are stored. 
+The ```random_forest()``` class can be initialised with ```outputs_folder()``` and ```model_folder()```. The outputs folder is where output files are stored and the model folder is where the model will be created if not overwritten. 
 
 ### /data-sets 
-The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/):
+The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/) and be in the following column format: username, message analytic LIWC score, clout LIWC score, authentic LIWC score, tone LIWC score. 
 - Extremist magazine https://www.kaggle.com/fifthtribe/isis-religious-texts
 - Counterpoise Tweets https://www.kaggle.com/activegalaxy/isis-related-tweets/home?select=AboutIsis.csv
 - Extremist tweets https://www.kaggle.com/fifthtribe/how-isis-uses-twitter/data

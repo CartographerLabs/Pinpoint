@@ -22,14 +22,14 @@ class wording_choice_aggregator():
 
         return frequency
 
-    def get_frequency_of_violent_or_curse_words(self, text):
+    def get_frequency_of_violent_or_curse_words(self, text, violent_words_datasets_location):
         """
         A function ued for retrieving the frequencies of violent words in a dataset
         :param text:
         :return: the frequency of violent words in a dataset
         """
 
-        dataset_folder = os.path.join(os.getcwd(), "violent_or_curse_word_datasets")
+        dataset_folder = os.path.join(os.getcwd(), violent_words_datasets_location)
 
         list_of_violent_or_curse_words = []
 

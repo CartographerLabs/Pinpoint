@@ -8,9 +8,9 @@ from Pinpoint.RandomForest import *
 # Performs feature extraction from the provided Extremist, Counterpoise, and Baseline datasets.
 extractor = feature_extraction()
 extractor.dump_training_data_features(r"Pinpoint\outputs\training_features.json",
-                                                 extremist_data_location= r"Pinpoint\data-sets\liwc-datasets\EXTREEME-LIWC.csv",
-                                                 counterpoise_data_location=r"Pinpoint\data-sets\liwc-datasets\COUNTER-LIWC.csv",
-                                                 baseline_data_location=r"Pinpoint\data-sets\liwc-datasets\BASELINE-2-LIWC.csv",
+                                                 extremist_data_location= r"Pinpoint/data-sets/liwc-datasets/EXTREEME-LIWC.csv",
+                                                 counterpoise_data_location=r"Pinpoint/data-sets/liwc-datasets/COUNTER-LIWC.csv",
+                                                 baseline_data_location=r"Pinpoint/data-sets/liwc-datasets/BASELINE-2-LIWC.csv",
                                                  force_new_dataset= False)
 
 # Trains a model off the features file created in the previous stage

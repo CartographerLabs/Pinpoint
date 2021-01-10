@@ -12,14 +12,14 @@ class sanitization():
     serialised corpus is saved that is used unless this feature is overwritten.
     """
 
-    def sanitize(self, text, force_new_data_and_dont_persisit = False):
+    def sanitize(self, text, output_folder, force_new_data_and_dont_persisit = False):
         """
         Entry function for sanitizing text
         :param text:
         :param force_new_data_and_dont_persisit:
         :return: sanitized text
         """
-        sanitize_file_name = r"Pinpoint\outputs\sanitized_text.txt"
+        sanitize_file_name = os.path.join(output_folder, "sanitized_text.txt")
         final_text = ""
 
         # If a file exists don't sanitize given text

@@ -17,6 +17,14 @@ class random_forest():
     model = None
     accuracy = None
 
+    outputs_folder = None
+    model_folder = None
+
+    def __init__(self, outputs_folder = "Pinpoint/outputs", model_folder = "Pinpoint/model"):
+        self.outputs_folder = outputs_folder
+        self.model_folder = model_folder
+
+
     def get_features_as_df(self, features_file, force_new_dataset = True):
         """
         Reads a JSON file file and converts to a Pandas dataframe that can be used to train and test the classifier.
@@ -91,13 +99,17 @@ class random_forest():
 
         return df
 
-    def train_model(self, features_file, force_new_dataset = True, model_location = r"Pinpoint\model\predictor.model"):
+    def train_model(self, features_file, force_new_dataset = True, model_location = None):
         """
         Trains the model of the proveded data unless the model file already exists or if the force new dataset flag is True.
         :param features_file: the location of the feature file to be used to train the model
         :param force_new_dataset: If True a new dataset will be created and new model created even if a model already exists.
         :param model_location: the location to save the model file to
         """
+
+        # Sets model location based on default folder location and placeholder name if none was given
+        if model_location is None:
+            model_location = os.path.join(self.model_folder,"predictor.model")
 
         # if told to force the creation of a new dataset to train off or the model location does not exist then make a new model
         if force_new_dataset or not os.path.isfile(model_location):

@@ -2,7 +2,6 @@ import csv
 import json
 import os
 import re
-import sys
 import uuid
 
 import pandas as pd
@@ -34,8 +33,32 @@ class feature_extraction():
     # A dictionary used for the translation of actual Twitter username to UUID
     dict_of_users = {}
 
-    MAX_RECORD_SIZE = sys.maxsize #todo 30050
+    MAX_RECORD_SIZE = 1000 #todo sys.maxsize
     SHOULD_USE_LIWC = True
+
+    # Datasets for training
+    violent_words_dataset_location = None
+    tf_idf_training_dataset_location = None
+    outputs_location = None
+
+    # Used for knowing which columns to access data from
+    DEFAULT_USERNAME_COLUMN_ID = 0
+    DEFAULT_MESSAGE_COLUMN_ID = 1
+    DEFAULT_ANALYTIC_COLUMN_ID = 2
+    DEFAULT_CLOUT_COLUMN_ID = 3
+    DEFAULT_AUTHENTIC_COLUMN_ID = 4
+    DEFAULT_TONE_COLUMN_ID = 5
+
+    def __init__(self, violent_words_dataset_location = r"Pinpoint/violent_or_curse_word_datasets"
+                 , tf_idf_training_dataset_location= r"Pinpoint/data-sets/religious_texts.csv",
+                 outputs_location =r"Pinpoint/outputs"):
+        """
+        Constructor
+        """
+
+        self.violent_words_dataset_location = violent_words_dataset_location
+        self.tf_idf_training_dataset_location = tf_idf_training_dataset_location
+        self.outputs_location = outputs_location
 
     def _reset_stored_feature_data(self):
         """
@@ -74,7 +97,8 @@ class feature_extraction():
             self.dict_of_users[username] = unique_id
 
         # todo it's less efficient writing the whole file every run
-        with open(r'outputs\users.json', 'w') as outfile:
+        path = os.path.join(self.outputs_location, "users.json")
+        with open(path, 'w') as outfile:
             json.dump(self.dict_of_users, outfile)
 
         return unique_id
@@ -137,7 +161,7 @@ class feature_extraction():
         :param message: a string representation of a social media message
         :return: The frequency of violent words in the message
         """
-        return wording_choice_aggregator().get_frequency_of_violent_or_curse_words(message)
+        return wording_choice_aggregator().get_frequency_of_violent_or_curse_words(message, self.violent_words_dataset_location)
 
     def _get_tweet_vector(self, message):
         """
@@ -151,7 +175,7 @@ class feature_extraction():
         tf_idf_model = self._get_tf_idf_model()
 
         for word in message.split(" "):
-            word = sanitization().sanitize(word, force_new_data_and_dont_persisit=True)
+            word = sanitization().sanitize(word, self.outputs_location, force_new_data_and_dont_persisit=True)
             try:
                 vectors.append(tf_idf_model.wv[word])
                 logger().print_message("Word '{}' in vocabulary...".format(word))
@@ -221,7 +245,7 @@ class feature_extraction():
         # if already made model, reuse
         if self.saved_tf_idf_model is None:
 
-            tweet_data_set_name = "Pinpoint/data-sets/religious_texts.csv"
+            tweet_data_set_name = self.tf_idf_training_dataset_location
 
             data_set = ""
             with open(tweet_data_set_name, 'r', encoding='cp1252') as file:
@@ -235,11 +259,11 @@ class feature_extraction():
                         continue
 
                     # take quote from dataset and add it to dataset
-                    message = row[5]
+                    message = row[5] # data column
                     data_set = data_set + message + "/n"
 
             # clean data set
-            clean_data = sanitization().sanitize(data_set)
+            clean_data = sanitization().sanitize(data_set, self.outputs_location)
 
             # get ngrams
             uni_grams, bi_grams, tri_grams = ngram_aggregator = n_gram_aggregator().get_ngrams(clean_data)
@@ -262,6 +286,7 @@ class feature_extraction():
         A wrapper around the open built in function that has fallbacks for different encodings.
         :return:
         """
+        dir_path = os.getcwd()
 
         for encoding in list_of_encodings:
             try:
@@ -272,18 +297,15 @@ class feature_extraction():
                 file.close()
                 file = open(location, access_type, encoding=encoding)
                 return file
-            except:
+            except LookupError as e:
                 continue
 
         raise Exception("No valid encoding provided for file: '{}'. Encodings provided: '{}'".format(location, list_of_encodings))
 
-
-
-
-    def _get_type_of_message_data(self, data_set_location, username_column_number,
-                                  message_column_number, has_header, is_extremist = None,
-                                  clout_column_number = None, analytic_column_number = None,
-                                  tone_column_number = None, authentic_column_number = None):
+    def _get_type_of_message_data(self, data_set_location, username_column_number= DEFAULT_USERNAME_COLUMN_ID,
+                                  message_column_number = DEFAULT_MESSAGE_COLUMN_ID, has_header = True, is_extremist = None,
+                                  clout_column_number = DEFAULT_CLOUT_COLUMN_ID, analytic_column_number = DEFAULT_ANALYTIC_COLUMN_ID,
+                                  tone_column_number = DEFAULT_TONE_COLUMN_ID, authentic_column_number = DEFAULT_AUTHENTIC_COLUMN_ID):
 
         # Counts the total rows in the CSV. Used for progress reporting.
         with self.open_wrapper(data_set_location, 'r') as file:
@@ -341,7 +363,7 @@ class feature_extraction():
 
                 # clean/ remove markup in dataset
                 tweet = tweet.replace("ENGLISH TRANSLATION:", "")
-                sanitised_message = sanitization().sanitize(tweet, force_new_data_and_dont_persisit=True)
+                sanitised_message = sanitization().sanitize(tweet, self.outputs_location, force_new_data_and_dont_persisit=True)
 
                 # If no message skip entry
                 if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(sanitised_message.split(" ")) > 0:
@@ -391,10 +413,7 @@ class feature_extraction():
         saving them to a file for a model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location,username_column_number=1,
-                                       message_column_number=7,has_header=True,is_extremist=True,
-                                       analytic_column_number=9, clout_column_number=10,authentic_column_number=11,
-                                       tone_column_number=12)
+        self._get_type_of_message_data(data_set_location=dataset_location,is_extremist=True)
 
     def _get_counterpoise_data(self,dataset_location):
         """
@@ -403,10 +422,7 @@ class feature_extraction():
         model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location,username_column_number=0,
-                                       message_column_number=4,has_header=True,is_extremist=False,
-                                       analytic_column_number=6,clout_column_number=7, authentic_column_number=8,
-                                       tone_column_number=9)
+        self._get_type_of_message_data(data_set_location=dataset_location,is_extremist=False)
 
     def _get_standard_tweets(self,dataset_location):
         """
@@ -414,10 +430,7 @@ class feature_extraction():
         dataset, extracting the features, and saving them to a file for a model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location,username_column_number=0,
-                                       message_column_number=1,has_header=True,is_extremist=False,
-                                       analytic_column_number=2, clout_column_number=3,authentic_column_number=4,
-                                       tone_column_number=5)
+        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False)
 
 
     def dump_features_for_list_of_datasets(self, feature_file_path_to_save_to, list_of_dataset_locations,
@@ -435,10 +448,7 @@ class feature_extraction():
         if force_new_dataset or not os.path.isfile(feature_file_path_to_save_to):
             for dataset in list_of_dataset_locations:
 
-                self._get_type_of_message_data(data_set_location=dataset, username_column_number=0,
-                                               message_column_number=1, has_header=True, is_extremist=None,
-                                               analytic_column_number=2, clout_column_number=3, authentic_column_number=4,
-                                               tone_column_number=5)
+                self._get_type_of_message_data(data_set_location=dataset, is_extremist=None)
 
             with open(feature_file_path_to_save_to, 'w') as outfile:
                 json.dump(self.completed_tweet_user_features, outfile, indent=4)
