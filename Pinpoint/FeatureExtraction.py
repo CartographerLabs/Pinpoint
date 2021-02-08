@@ -12,7 +12,7 @@ from Pinpoint.Aggregator_Word2Vec import word_2_vec_aggregator
 from Pinpoint.Aggregator_WordingChoice import wording_choice_aggregator
 from Pinpoint.Grapher import grapher
 from Pinpoint.Logger import logger
-from Pinpoint.Sanitizer import sanitization
+from Pinpoint.Sanitizer import sanitization, sys
 from Pinpoint.Twitter_api import Twitter
 
 
@@ -33,7 +33,7 @@ class feature_extraction():
     # A dictionary used for the translation of actual Twitter username to UUID
     dict_of_users = {}
 
-    MAX_RECORD_SIZE = 3050  # todo sys.maxsize
+    MAX_RECORD_SIZE = sys.maxsize #3050
     SHOULD_USE_LIWC = True
 
     # Datasets for training
@@ -120,19 +120,17 @@ class feature_extraction():
         self.graph.add_node(originating_user_name)
 
         # Process mentions
-        mentions = re.findall("(@.+) ", message)
+        mentions = re.findall("\@([a-zA-Z\-\_]+)", message)
 
         # For all mentions in the tweet add them to the graph as a node
         for mention in mentions:
-            recipient_user_name = mention.replace("@", "")
-            self.graph.add_edge_wrapper(originating_user_name, recipient_user_name, 1, "mention")
+            self.graph.add_edge_wrapper(originating_user_name, mention, 1, "mention")
 
         # process hashtags
-        hashtags = re.findall("(#.+) ", message)
+        hashtags = re.findall("\#([a-zA-Z\-\_]+)", message)
 
         # For all hashtags in the tweet add them to the graph as a node
         for hashtag in hashtags:
-            hashtag = hashtag.replace("#", "")
             self.graph.add_edge_wrapper(originating_user_name, hashtag, 1, "hashtag")
 
     def _get_post_frequency(self, user_name):
@@ -182,7 +180,7 @@ class feature_extraction():
         tf_idf_model = self._get_tf_idf_model()
 
         for word in message.split(" "):
-            word = sanitization().sanitize(word, self.outputs_location, force_new_data_and_dont_persisit=True)
+            #todo add  back word = sanitization().sanitize(word, self.outputs_location, force_new_data_and_dont_persisit=True)
             try:
                 vectors.append(tf_idf_model.wv[word])
                 logger().print_message("Word '{}' in vocabulary...".format(word))
@@ -270,18 +268,20 @@ class feature_extraction():
                     data_set = data_set + message + "/n"
 
             # clean data set
-            clean_data = sanitization().sanitize(data_set, self.outputs_location)
+            #todo should we be doing sanitization clean_data = sanitization().sanitize(data_set, self.outputs_location) # if so remove line below
+            clean_data = data_set
 
             # get ngrams
-            uni_grams, bi_grams, tri_grams = ngram_aggregator = n_gram_aggregator().get_ngrams(clean_data)
+            uni_grams, bi_grams, tri_grams = n_gram_aggregator().get_ngrams(clean_data)
             ngrams = uni_grams + bi_grams + tri_grams
 
             # todo The TF_IDF most important ngrams arn't being used. Should these be used instead of the other ngrams
             tf_idf_scores = tf_idf_aggregator().get_tf_idf_scores(ngrams, data_set)
-            list_of_most_important_ngrams = sorted(tf_idf_scores, key=tf_idf_scores.get, reverse=True)[:50]
+            number_of_most_important_ngrams = int(len(ngrams)/2) #number is half all ngrams
+            list_of_most_important_ngrams = sorted(tf_idf_scores, key=tf_idf_scores.get, reverse=True)[:number_of_most_important_ngrams]
 
             # create a word 2 vec model
-            model = word_2_vec_aggregator().get_model(list_of_sentences=ngrams)
+            model = word_2_vec_aggregator().get_model(list_of_sentences=list_of_most_important_ngrams)
             self.saved_tf_idf_model = model
         else:
             model = self.saved_tf_idf_model
@@ -293,7 +293,6 @@ class feature_extraction():
         A wrapper around the open built in function that has fallbacks for different encodings.
         :return:
         """
-        dir_path = os.getcwd()
 
         for encoding in list_of_encodings:
             try:

@@ -16,9 +16,17 @@ class random_forest():
 
     model = None
     accuracy = None
+    precision = None
+    recall = None
+    f_measure = None
 
-    outputs_folder = None
-    model_folder = None
+    _ORIGINAL_MODEL_VERSION = 0.1 # Used when creating a new model file
+    # v0.1 - versioning added.
+
+    model_version = _ORIGINAL_MODEL_VERSION #can be updated if reading and using a model file of a different version
+
+    _outputs_folder = None
+    _model_folder = None
 
     def __init__(self, outputs_folder="Pinpoint/outputs", model_folder="Pinpoint/model"):
         """
@@ -27,8 +35,8 @@ class random_forest():
         The random_forest() class can be initialised with outputs_folder() and model_folder(). The outputs folder is
         where output files are stored and the model folder is where the model will be created if not overwritten.
         """
-        self.outputs_folder = outputs_folder
-        self.model_folder = model_folder
+        self._outputs_folder = outputs_folder
+        self._model_folder = model_folder
 
     def get_features_as_df(self, features_file, force_new_dataset=True):
         """
@@ -116,7 +124,7 @@ class random_forest():
 
         # Sets model location based on default folder location and placeholder name if none was given
         if model_location is None:
-            model_location = os.path.join(self.model_folder, "predictor.model")
+            model_location = os.path.join(self._model_folder, "predictor.model")
 
         # if told to force the creation of a new dataset to train off or the model location does not exist then make a new model
         if force_new_dataset or not os.path.isfile(model_location):
@@ -125,17 +133,18 @@ class random_forest():
             feature_data = self.get_features_as_df(features_file, force_new_dataset)
 
             # Removes index column
-            feature_data.drop(feature_data.columns[0], axis=1, inplace=True)
+            if "ID" in feature_data.keys():
+                feature_data.drop(feature_data.columns[0], axis=1, inplace=True)
             feature_data.reset_index(drop=True, inplace=True)
 
             y = feature_data[['is_extremist']]  # Labels
             X = feature_data.drop(axis=1, labels=['is_extremist'])  # Features
 
             # Split dataset into training set and test set
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)  # 70% training and 30% test
+            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)  # 80% training and 20% test
 
             # Create a Gaussian Classifier
-            clf = RandomForestClassifier(n_estimators=100)
+            clf = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True, class_weight="balanced") #todo this weighting is off
 
             # Train the model using the training sets y_pred=clf.predict(X_test)
             clf.fit(X_train, y_train.values.ravel())
@@ -146,15 +155,35 @@ class random_forest():
 
             # Model Accuracy, how often is the classifier correct?
             self.accuracy = metrics.accuracy_score(y_test, y_pred)
+            self.recall = metrics.recall_score(y_test, y_pred)
+            self.precision = metrics.precision_score(y_test, y_pred)
+            self.f_measure = metrics.f1_score(y_test, y_pred)
+
             print("Accuracy:", self.accuracy)
+            print("Recall:", self.recall)
+            print("Precision:", self.precision)
+            print("F-Measure:", self.f_measure)
 
             self.model = clf
 
             # write model and accuracy to file to file
-            pickle.dump({"model": self.model, "accuracy": self.accuracy}, open(model_location, "wb"))
+
+            model_data = {"model": self.model,
+                          "accuracy": self.accuracy,
+                          "recall":self.recall,
+                          "precision":self.precision,
+                          "f1": self.f_measure,
+                          "version": self._ORIGINAL_MODEL_VERSION
+                          }
+
+            pickle.dump(model_data, open(model_location, "wb"))
 
         else:
             # Read model and accuracy from file
             saved_file = pickle.load(open(model_location, "rb"))
             self.accuracy = saved_file["accuracy"]
+            self.recall = saved_file["recall"]
+            self.precision = saved_file["precision"]
+            self.f_measure = saved_file["f1"]
+            #self.model_version = saved_file["version"]
             self.model = saved_file["model"]
