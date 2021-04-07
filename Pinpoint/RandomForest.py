@@ -75,6 +75,25 @@ class random_forest():
 
                 # If any of the filters are not true remove the features not requested
                 column_names = []
+
+                if self.PSYCHOLOGICAL_SIGNALS_ENABLED:
+                    column_names = column_names + ["clout", "analytic", "tone", "authentic",
+                                                   "anger", "sadness", "anxiety",
+                                                   "power", "reward", "risk", "achievement", "affiliation",
+                                                   "i_pronoun", "p_pronoun",
+                                                   "minkowski"]
+                if self.BEHAVIOURAL_FEATURES_ENABLED:
+                    column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
+
+                if self.RADICAL_LANGUAGE_ENABLED:
+                    # Add column names
+                    column_names = column_names + ["cap_freq", "violent_freq"]
+                    # Add the two hundred vectors columns
+                    for iterator in range(1, 201):
+                        column_names.append("message_vector_{}".format(iterator))
+
+                column_names = column_names + ['is_extremist']
+
                 if not self.BEHAVIOURAL_FEATURES_ENABLED or not self.PSYCHOLOGICAL_SIGNALS_ENABLED or self.RADICAL_LANGUAGE_ENABLED:
 
                     # Loops through list of dicts (messages)
@@ -121,31 +140,16 @@ class random_forest():
                                 # Minkowski distance
                                 feature_dict["minkowski"] = message_features["minkowski"]
 
-                                column_names = column_names + ["clout", "analytic", "tone", "authentic",
-                                                               "anger", "sadness", "anxiety",
-                                                               "power", "reward", "risk", "achievement", "affiliation",
-                                                               "i_pronoun", "p_pronoun",
-                                                               "minkowski"]
-
                             if self.BEHAVIOURAL_FEATURES_ENABLED:
                                 feature_dict['post_freq'] = message_features['post_freq']
                                 feature_dict['follower_freq'] = message_features['follower_freq']
                                 feature_dict['centrality'] = message_features['centrality']
-
-                                column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
 
                             if self.RADICAL_LANGUAGE_ENABLED:
                                 feature_dict["message_vector"] = message_features["message_vector"]
                                 feature_dict["violent_freq"] = message_features["violent_freq"]
                                 feature_dict["cap_freq"] = message_features["cap_freq"]
 
-                                # Add column names
-                                column_names = column_names + ["cap_freq", "violent_freq"]
-                                # Add the two hundred vectors columns
-                                for iterator in range(1, 201):
-                                    column_names.append("message_vector_{}".format(iterator))
-
-                            column_names = column_names + ['is_extremist']
                             feature_dict['is_extremist'] = message_features['is_extremist']
 
                             user = {user: feature_dict}

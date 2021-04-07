@@ -34,7 +34,7 @@ class feature_extraction():
     # A dictionary used for the translation of actual Twitter username to UUID
     dict_of_users = {}
 
-    # The max size for a single dataset (i.e. baseline tweets)
+    # The max size for all data entries  (i.e. baseline tweets)
     MAX_RECORD_SIZE = sys.maxsize  # 3050
 
     # Datasets for training
