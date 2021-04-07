@@ -1,12 +1,15 @@
 import json
 import os
 import pickle
+from datetime import datetime
 
 import pandas
 import pandas as pd
 from sklearn import metrics
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
+
+from Pinpoint import Logger
 
 
 class random_forest():
@@ -20,21 +23,36 @@ class random_forest():
     recall = None
     f_measure = None
 
-    _ORIGINAL_MODEL_VERSION = 0.1 # Used when creating a new model file
-    # v0.1 - versioning added.
+    # Model variables populated on creation or reading of file
 
-    model_version = _ORIGINAL_MODEL_VERSION #can be updated if reading and using a model file of a different version
+    original_name = None
+    creation_date = None
+
+    _FRAMEWORK_VERSION = 0.2  # Used when creating a new model file
+    # v0.1 - versioning added.
+    # v0.2 - Added more LIWC scores and minkowski distance
+
+    model_version = _FRAMEWORK_VERSION  # can be updated if reading and using a model file of a different version
 
     _outputs_folder = None
     _model_folder = None
 
-    def __init__(self, outputs_folder="Pinpoint/outputs", model_folder="Pinpoint/model"):
+    # Categories of features used in the model
+    RADICAL_LANGUAGE_ENABLED = True  # RF-IDF Scores, Word Embeddings
+    PSYCHOLOGICAL_SIGNALS_ENABLED = True  # LIWC Dictionaries, Minkowski distance
+    BEHAVIOURAL_FEATURES_ENABLED = True  # frequency of tweets, followers / following ratio,  centrality
+
+    def __init__(self, outputs_folder="outputs", model_folder=None):
         """
         Constructor
 
         The random_forest() class can be initialised with outputs_folder() and model_folder(). The outputs folder is
         where output files are stored and the model folder is where the model will be created if not overwritten.
         """
+
+        if model_folder is None:
+            model_folder = outputs_folder
+
         self._outputs_folder = outputs_folder
         self._model_folder = model_folder
 
@@ -46,24 +64,98 @@ class random_forest():
         :return: a Pandas dataframe with the features.
         """
 
-        column_names = ["post_freq", "follower_freq", "cap_freq", "violent_freq",
-                        "centrality", 'is_extremist', "clout", "analytic", "tone", "authentic"]
-
-        # Add the two hundred vectors columns
-        for iterator in range(1, 201):
-            column_names.append("message_vector_{}".format(iterator))
-
-        # Creates the columns for the data frame
-        df = pd.DataFrame(
-            columns=column_names)
-
         with open(features_file) as json_features_file:
             csv_file = "{}.csv".format(features_file)
 
             if force_new_dataset or not os.path.isfile(csv_file):
                 features = json.load(json_features_file)
 
-                number_of_features = len(features)
+                # todo remove the data for the fetures not being used.
+                filtered_list_after_filters_applied = []
+
+                # If any of the filters are not true remove the features not requested
+                column_names = []
+                if not self.BEHAVIOURAL_FEATURES_ENABLED or not self.PSYCHOLOGICAL_SIGNALS_ENABLED or self.RADICAL_LANGUAGE_ENABLED:
+
+                    # Loops through list of dicts (messages)
+                    number_of_processed_messages = 0
+                    for message in features:
+                        number_of_processed_messages = number_of_processed_messages + 1
+                        Logger.logger.print_message(
+                            "Extracting information from message {} of {} in file {}".format(
+                                number_of_processed_messages,
+                                len(features),
+                                features_file),
+                            logging_level=1)
+
+                        # Loops through dict keys (usernames)
+                        for user in message.keys():
+
+                            message_features = message[user]
+
+                            feature_dict = {}
+
+                            if self.PSYCHOLOGICAL_SIGNALS_ENABLED:
+                                # Summary variables
+                                feature_dict["clout"] = message_features["clout"]
+                                feature_dict["analytic"] = message_features["analytic"]
+                                feature_dict["tone"] = message_features["tone"]
+                                feature_dict["authentic"] = message_features["authentic"]
+
+                                # Emotional Analysis
+                                feature_dict["anger"] = message_features["anger"]
+                                feature_dict["sadness"] = message_features["sadness"]
+                                feature_dict["anxiety"] = message_features["anxiety"]
+
+                                # Personal Drives
+                                feature_dict["power"] = message_features["power"]
+                                feature_dict["reward"] = message_features["reward"]
+                                feature_dict["risk"] = message_features["risk"]
+                                feature_dict["achievement"] = message_features["achievement"]
+                                feature_dict["affiliation"] = message_features["affiliation"]
+
+                                # Personal Pronouns
+                                feature_dict["i_pronoun"] = message_features["i_pronoun"]
+                                feature_dict["p_pronoun"] = message_features["p_pronoun"]
+
+                                # Minkowski distance
+                                feature_dict["minkowski"] = message_features["minkowski"]
+
+                                column_names = column_names + ["clout", "analytic", "tone", "authentic",
+                                                               "anger", "sadness", "anxiety",
+                                                               "power", "reward", "risk", "achievement", "affiliation",
+                                                               "i_pronoun", "p_pronoun",
+                                                               "minkowski"]
+
+                            if self.BEHAVIOURAL_FEATURES_ENABLED:
+                                feature_dict['post_freq'] = message_features['post_freq']
+                                feature_dict['follower_freq'] = message_features['follower_freq']
+                                feature_dict['centrality'] = message_features['centrality']
+
+                                column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
+
+                            if self.RADICAL_LANGUAGE_ENABLED:
+                                feature_dict["message_vector"] = message_features["message_vector"]
+                                feature_dict["violent_freq"] = message_features["violent_freq"]
+                                feature_dict["cap_freq"] = message_features["cap_freq"]
+
+                                # Add column names
+                                column_names = column_names + ["cap_freq", "violent_freq"]
+                                # Add the two hundred vectors columns
+                                for iterator in range(1, 201):
+                                    column_names.append("message_vector_{}".format(iterator))
+
+                            column_names = column_names + ['is_extremist']
+                            feature_dict['is_extremist'] = message_features['is_extremist']
+
+                            user = {user: feature_dict}
+                            filtered_list_after_filters_applied.append(user)
+
+                number_of_features = len(filtered_list_after_filters_applied)
+
+                # Creates the columns for the data frame
+                df = pd.DataFrame(
+                    columns=column_names)
 
                 completed_features = 0
                 iterator = 0
@@ -73,34 +165,65 @@ class random_forest():
                     for user_id in message:
                         feature_data = message[user_id]
                         # ID is not included as it's hexidecimal and not float
-                        post_freq = feature_data['post_freq']
-                        follower_freq = feature_data['follower_freq']
-                        cap_freq = feature_data['cap_freq']
-                        violent_freq = feature_data['violent_freq']
-                        message_vector = feature_data['message_vector']
-                        centrality = feature_data['centrality']
-                        is_extremist = feature_data['is_extremist']
-                        clout = feature_data['clout']
-                        analytic = feature_data['analytic']
-                        tone = feature_data['tone']
-                        authentic = feature_data['authentic']
 
-                        row = [post_freq, follower_freq, cap_freq, violent_freq,
-                               centrality, is_extremist, clout, analytic, tone, authentic] + message_vector
+                        row = []
+
+                        if self.PSYCHOLOGICAL_SIGNALS_ENABLED:
+                            clout = feature_data['clout']
+                            analytic = feature_data['analytic']
+                            tone = feature_data['tone']
+                            authentic = feature_data['authentic']
+
+                            anger = feature_data["anger"]
+                            sadness = feature_data["sadness"]
+                            anxiety = feature_data["anxiety"]
+                            power = feature_data["power"]
+                            reward = message_features["reward"]
+                            risk = message_features["risk"]
+                            achievement = feature_data["achievement"]
+                            affiliation = feature_data["affiliation"]
+                            i_pronoun = feature_data["i_pronoun"]
+                            p_pronoun = feature_data["p_pronoun"]
+                            minkowski = feature_data["minkowski"]
+
+                            row = row + [clout, analytic, tone, authentic, anger, sadness, anxiety, power,
+                                         reward, risk, achievement, affiliation, i_pronoun, p_pronoun, minkowski]
+
+                        if self.BEHAVIOURAL_FEATURES_ENABLED:
+                            post_freq = feature_data['post_freq']
+                            follower_freq = feature_data['follower_freq']
+                            centrality = feature_data['centrality']
+
+                            row = row + [post_freq, follower_freq, centrality]
+
+                        if self.RADICAL_LANGUAGE_ENABLED:
+                            cap_freq = feature_data['cap_freq']
+                            violent_freq = feature_data['violent_freq']
+                            message_vector = feature_data['message_vector']
+
+                            row = row + [cap_freq, violent_freq] + message_vector
+
+                        is_extremist = feature_data['is_extremist']
+
+                        row = row + [is_extremist]
                         try:
                             df.loc[iterator] = row
                         except ValueError as e:
+                            print(e)
                             error_count = error_count + 1
                             pass  # if error with value probably column mismatch which is down to taking a mesage with no data
 
                         iterator = iterator + 1
                     completed_features = completed_features + 1
                     user_name = list(message.keys())[0]
-                    print("Added a message from user {} to data frame - {} messages of {} completed".format(user_name,
-                                                                                                            completed_features,
-                                                                                                            number_of_features))
+                    Logger.logger.print_message(
+                        "Added a message from user {} to data frame - {} messages of {} completed".format(user_name,
+                                                                                                          completed_features,
+                                                                                                          number_of_features),
+                        logging_level=1)
 
-                print("Total errors when creating data frame: {}".format(error_count))
+                Logger.logger.print_message("Total errors when creating data frame: {}".format(error_count),
+                                            logging_level=1)
 
                 # Replace boolean with float
                 df.replace({False: 0, True: 1}, inplace=True)
@@ -144,14 +267,13 @@ class random_forest():
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)  # 80% training and 20% test
 
             # Create a Gaussian Classifier
-            clf = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True, class_weight="balanced") #todo this weighting is off
+            random_forest = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True,
+                                         class_weight="balanced")  # todo this weighting is off
 
-            # Train the model using the training sets y_pred=clf.predict(X_test)
-            clf.fit(X_train, y_train.values.ravel())
+            # Train the model using the training sets y_pred=random_forest.predict(X_test)
+            random_forest.fit(X_train, y_train.values.ravel())
 
-            y_pred = clf.predict(X_test)
-
-            # Import scikit-learn metrics module for accuracy calculation
+            y_pred = random_forest.predict(X_test)
 
             # Model Accuracy, how often is the classifier correct?
             self.accuracy = metrics.accuracy_score(y_test, y_pred)
@@ -159,21 +281,24 @@ class random_forest():
             self.precision = metrics.precision_score(y_test, y_pred)
             self.f_measure = metrics.f1_score(y_test, y_pred)
 
-            print("Accuracy:", self.accuracy)
-            print("Recall:", self.recall)
-            print("Precision:", self.precision)
-            print("F-Measure:", self.f_measure)
+            Logger.logger.print_message("Accuracy: {}".format(self.accuracy), logging_level=1)
+            Logger.logger.print_message("Recall: {}".format(self.recall), logging_level=1)
+            Logger.logger.print_message("Precision: {}".format(self.precision), logging_level=1)
+            Logger.logger.print_message("F-Measure: {}".format(self.f_measure), logging_level=1)
 
-            self.model = clf
+            self.model = random_forest
+            self.original_name = model_location
+            self.creation_date = datetime.today().strftime('%Y-%m-%d')
 
             # write model and accuracy to file to file
-
             model_data = {"model": self.model,
+                          "original_name": self.original_name,
+                          "creation_date": self.creation_date,
                           "accuracy": self.accuracy,
-                          "recall":self.recall,
-                          "precision":self.precision,
+                          "recall": self.recall,
+                          "precision": self.precision,
                           "f1": self.f_measure,
-                          "version": self._ORIGINAL_MODEL_VERSION
+                          "version": self._FRAMEWORK_VERSION
                           }
 
             pickle.dump(model_data, open(model_location, "wb"))
@@ -181,9 +306,18 @@ class random_forest():
         else:
             # Read model and accuracy from file
             saved_file = pickle.load(open(model_location, "rb"))
+
             self.accuracy = saved_file["accuracy"]
             self.recall = saved_file["recall"]
             self.precision = saved_file["precision"]
             self.f_measure = saved_file["f1"]
-            #self.model_version = saved_file["version"]
             self.model = saved_file["model"]
+            self.model_version = saved_file["version"]
+            self.original_name = saved_file["original_name"]
+            self.creation_date = saved_file["creation_date"]
+
+            # A check to identify if the loaded model is of the same version as the tooling
+            if self.model_version is not self._FRAMEWORK_VERSION:
+                Logger.logger.print_message("Model provided is of version {}, tooling is of "
+                                            "version {}. Using the model may not work as expected."
+                                            .format(self.model_version, self._FRAMEWORK_VERSION))

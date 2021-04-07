@@ -11,6 +11,7 @@ try:
 except LookupError:
     download()
 
+
 # nltk.download() #todo how to get this to run once?
 
 class sanitization():
