@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import pickle
@@ -70,11 +71,30 @@ class random_forest():
             if force_new_dataset or not os.path.isfile(csv_file):
                 features = json.load(json_features_file)
 
-                # todo remove the data for the fetures not being used.
+                # todo remove the data for the features not being used.
                 filtered_list_after_filters_applied = []
 
                 # If any of the filters are not true remove the features not requested
                 column_names = []
+
+                if self.PSYCHOLOGICAL_SIGNALS_ENABLED:
+                    column_names = column_names + ["clout", "analytic", "tone", "authentic",
+                                                   "anger", "sadness", "anxiety",
+                                                   "power", "reward", "risk", "achievement", "affiliation",
+                                                   "i_pronoun", "p_pronoun",
+                                                   "minkowski"]
+                if self.BEHAVIOURAL_FEATURES_ENABLED:
+                    column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
+
+                if self.RADICAL_LANGUAGE_ENABLED:
+                    # Add column names
+                    column_names = column_names + ["cap_freq", "violent_freq"]
+                    # Add the two hundred vectors columns
+                    for iterator in range(1, 201):
+                        column_names.append("message_vector_{}".format(iterator))
+
+                column_names = column_names + ['is_extremist']
+
                 if not self.BEHAVIOURAL_FEATURES_ENABLED or not self.PSYCHOLOGICAL_SIGNALS_ENABLED or self.RADICAL_LANGUAGE_ENABLED:
 
                     # Loops through list of dicts (messages)
@@ -121,31 +141,16 @@ class random_forest():
                                 # Minkowski distance
                                 feature_dict["minkowski"] = message_features["minkowski"]
 
-                                column_names = column_names + ["clout", "analytic", "tone", "authentic",
-                                                               "anger", "sadness", "anxiety",
-                                                               "power", "reward", "risk", "achievement", "affiliation",
-                                                               "i_pronoun", "p_pronoun",
-                                                               "minkowski"]
-
                             if self.BEHAVIOURAL_FEATURES_ENABLED:
                                 feature_dict['post_freq'] = message_features['post_freq']
                                 feature_dict['follower_freq'] = message_features['follower_freq']
                                 feature_dict['centrality'] = message_features['centrality']
-
-                                column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
 
                             if self.RADICAL_LANGUAGE_ENABLED:
                                 feature_dict["message_vector"] = message_features["message_vector"]
                                 feature_dict["violent_freq"] = message_features["violent_freq"]
                                 feature_dict["cap_freq"] = message_features["cap_freq"]
 
-                                # Add column names
-                                column_names = column_names + ["cap_freq", "violent_freq"]
-                                # Add the two hundred vectors columns
-                                for iterator in range(1, 201):
-                                    column_names.append("message_vector_{}".format(iterator))
-
-                            column_names = column_names + ['is_extremist']
                             feature_dict['is_extremist'] = message_features['is_extremist']
 
                             user = {user: feature_dict}
@@ -178,8 +183,8 @@ class random_forest():
                             sadness = feature_data["sadness"]
                             anxiety = feature_data["anxiety"]
                             power = feature_data["power"]
-                            reward = message_features["reward"]
-                            risk = message_features["risk"]
+                            reward = feature_data["reward"]
+                            risk = feature_data["risk"]
                             achievement = feature_data["achievement"]
                             affiliation = feature_data["affiliation"]
                             i_pronoun = feature_data["i_pronoun"]
@@ -237,6 +242,51 @@ class random_forest():
 
         return df
 
+    def create_model_info_output_file(self, location_of_output_file = None, training_data_csv_location = None):
+        """
+        If the model has been loaded or trained this function will create a summary text file with information relating to
+        the model.
+        :param location_of_output_file: The location to save the output file to.
+        :param training_data_csv_location: The location of the training data csv. This is used to retrieve the name of the
+        feature columns.
+        """
+
+        # Check if model has been created
+        if not  self.creation_date:
+            Logger.logger.print_message("Model has not been trained, created, or loaded. Cannot output model data in this state.",logging_level=1)
+        else:
+            Logger.logger.print_message("Creating model info text file")
+            output_text = ""
+
+            # Add summary information
+            output_text += "Model {}, version {}, created at {} \n".format(self.original_name, self.model_version, self.creation_date)
+            output_text += "\nAccuracy: {}\nRecall: {} \nPrecision: {}\nF-Measure: {}\n".format(self.accuracy, self.recall,
+                                                                                   self.precision, self.f_measure)
+
+            # Retrieve the header names if available
+            if training_data_csv_location:
+                with open(training_data_csv_location, "r") as csv_file:
+                    reader = csv.reader(csv_file)
+                    headers = next(reader)
+
+            # Loop through all feature importance scores
+            for iterator in range(len(self.model.feature_importances_)):
+                if training_data_csv_location:
+                    # Plus one to ignore ID field
+                    output_text += "\n{}: {}".format(headers[iterator+1], self.model.feature_importances_[iterator])
+                else:
+                    output_text += "\nFeature {}: {}".format(iterator,self.model.feature_importances_[iterator])
+
+        # If no name has been set write to outputs folder
+        if location_of_output_file:
+            file_name = location_of_output_file
+        else:
+            file_name = os.path.join(self._outputs_folder,"model-output-{}.txt".format(datetime.today().strftime('%Y-%m-%d-%H%M%S')))
+
+        # Write to file
+        with open(file_name, "w") as output_file:
+            output_file.write(output_text)
+
     def train_model(self, features_file, force_new_dataset=True, model_location=None):
         """
         Trains the model of the proveded data unless the model file already exists or if the force new dataset flag is True.
@@ -268,7 +318,7 @@ class random_forest():
 
             # Create a Gaussian Classifier
             random_forest = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True,
-                                         class_weight="balanced")  # todo this weighting is off
+                                         class_weight={0:1,1:5})  # A higher weight for the minority class (is_extreamist)
 
             # Train the model using the training sets y_pred=random_forest.predict(X_test)
             random_forest.fit(X_train, y_train.values.ravel())

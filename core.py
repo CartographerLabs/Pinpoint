@@ -1,6 +1,7 @@
 """
 Example of training a model using this package.
 """
+
 from Pinpoint.FeatureExtraction import *
 from Pinpoint.RandomForest import *
 
@@ -15,6 +16,16 @@ extractor.dump_training_data_features(
     force_new_dataset=False)
 
 # Trains a model off the features file created in the previous stage
-model = random_forest(outputs_folder="outputs", model_folder="outputs")
-model.train_model(r"C:\Projects\Pinpoint\outputs\training_features.json",
-                  False)  # , model_location=r"Pinpoint/model/my.model"
+
+model.RADICAL_LANGUAGE_ENABLED = True
+model.BEHAVIOURAL_FEATURES_ENABLED = True
+model.PSYCHOLOGICAL_SIGNALS_ENABLED = True
+
+model.train_model(features_file= r"C:\Projects\Pinpoint\outputs\training_features.json",
+                  force_new_dataset=False, model_location=r"outputs\baseline.model")  # , model_location=r"Pinpoint/model/my.model"
+
+model.create_model_info_output_file(location_of_output_file="outputs/baseline-output.txt",
+                                    training_data_csv_location=r"C:\Projects\Pinpoint\outputs\training_features.json.csv")
+
+
+print("Finished")
