@@ -4,7 +4,6 @@ requirements = []
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
-
 setuptools.setup(
     name="Pinpoint",
     version="0.0.2",
