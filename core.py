@@ -16,6 +16,7 @@ extractor.dump_training_data_features(
     force_new_dataset=False)
 
 # Trains a model off the features file created in the previous stage
+model = random_forest()
 
 model.RADICAL_LANGUAGE_ENABLED = True
 model.BEHAVIOURAL_FEATURES_ENABLED = True
