@@ -28,5 +28,36 @@ model.train_model(features_file= r"C:\Projects\Pinpoint\outputs\training_feature
 model.create_model_info_output_file(location_of_output_file="outputs/baseline-output.txt",
                                     training_data_csv_location=r"C:\Projects\Pinpoint\outputs\training_features.json.csv")
 
+model.RADICAL_LANGUAGE_ENABLED = True
+model.BEHAVIOURAL_FEATURES_ENABLED = False
+model.PSYCHOLOGICAL_SIGNALS_ENABLED = False
+
+model.train_model(features_file= r"C:\Projects\Pinpoint\outputs\training_features.json",
+                  force_new_dataset=True, model_location=r"outputs\radical-language.model")  # , model_location=r"Pinpoint/model/my.model"
+
+model.create_model_info_output_file(location_of_output_file="outputs/radical-language-output.txt",
+                                    training_data_csv_location=r"C:\Projects\Pinpoint\outputs\training_features.json.csv")
+
+model.RADICAL_LANGUAGE_ENABLED = False
+model.BEHAVIOURAL_FEATURES_ENABLED = True
+model.PSYCHOLOGICAL_SIGNALS_ENABLED = False
+
+model.train_model(features_file= r"C:\Projects\Pinpoint\outputs\training_features.json",
+                  force_new_dataset=True, model_location=r"outputs\behavioural.model")  # , model_location=r"Pinpoint/model/my.model"
+
+model.create_model_info_output_file(location_of_output_file="outputs/behavioural-output.txt",
+                                    training_data_csv_location=r"C:\Projects\Pinpoint\outputs\training_features.json.csv")
+
+
+model.RADICAL_LANGUAGE_ENABLED = False
+model.BEHAVIOURAL_FEATURES_ENABLED = False
+model.PSYCHOLOGICAL_SIGNALS_ENABLED = True
+
+model.train_model(features_file= r"C:\Projects\Pinpoint\outputs\training_features.json",
+                  force_new_dataset=True, model_location=r"outputs\psychological.model")  # , model_location=r"Pinpoint/model/my.model"
+
+model.create_model_info_output_file(location_of_output_file="outputs/psychological-output.txt",
+                                    training_data_csv_location=r"C:\Projects\Pinpoint\outputs\training_features.json.csv")
+
 
 print("Finished")
