@@ -31,7 +31,6 @@ with open(clean_message_csv_location, newline='', encoding="cp1252") as csvfile:
     for row in row_reader:
         length_of_file = length_of_file + 1
         messages.append(row[1])
-        print(row[1])
 
 # Loops for a max depth
 for depth in range(0, depth_range):
