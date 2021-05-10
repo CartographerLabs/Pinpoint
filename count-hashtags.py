@@ -39,12 +39,6 @@ with open(clean_message_csv_location, newline='', encoding="utf8") as csvfile:
     # Loops through all hastags to be searched for
     for search_hashtag in list_of_hashtags:
 
-        # Write to file as we go
-        sorted(dict_of_hashtag_count, key=dict_of_hashtag_count.get, reverse=True)
-        output_file = open("hashtag-count.txt", "w", encoding="utf8")
-        json.dump(dict_of_hashtag_count, output_file)
-        output_file.close()
-
         search_hastag_count = search_hastag_count+ 1
         # Loop through all rows of messages looking for the hastag that's being searched for
         message_count = 0
@@ -61,6 +55,15 @@ with open(clean_message_csv_location, newline='', encoding="utf8") as csvfile:
                     dict_of_hashtag_count[search_hashtag.lower()] = dict_of_hashtag_count[search_hashtag.lower()] + 1
                 else:
                     dict_of_hashtag_count[search_hashtag.lower()] = 1
+
+orderd_list = sorted(dict_of_hashtag_count, key=dict_of_hashtag_count.get, reverse=True)
+
+new_dict = {}
+
+for entry in orderd_list:
+    new_dict[entry] = dict_of_hashtag_count[entry]
+
+print(new_dict)
 
 # Write to file when completed
 sorted(dict_of_hashtag_count, key=dict_of_hashtag_count.get, reverse=True)
