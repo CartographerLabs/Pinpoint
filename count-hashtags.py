@@ -63,9 +63,6 @@ new_dict = {}
 for entry in orderd_list:
     new_dict[entry] = dict_of_hashtag_count[entry]
 
-print(new_dict)
-
 # Write to file when completed
-sorted(dict_of_hashtag_count, key=dict_of_hashtag_count.get, reverse=True)
 output_file = open("hashtag-count.txt", "w", encoding="utf8")
-json.dump(dict_of_hashtag_count, output_file)
+json.dump(new_dict, output_file)
