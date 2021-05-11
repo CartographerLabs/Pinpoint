@@ -318,8 +318,8 @@ class random_forest():
 
             # Create a Gaussian Classifier
             random_forest = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True,
-                                         class_weight={0:1,1:5})  # A higher weight for the minority class (is_extreamist)
-
+                                         class_weight={0:5,1:1})  # A higher weight for the minority class (is_extreamist)
+                                        #TODO change back to 0:1, 1:5
             # Train the model using the training sets y_pred=random_forest.predict(X_test)
             random_forest.fit(X_train, y_train.values.ravel())
 

@@ -9,7 +9,7 @@ for hastag in output_file.readlines():
     list_of_hashtags.append(hastag.strip("\n"))
 output_file.close()
 
-clean_message_csv_location = r"datasets/far-right/LIWC2015 Results (extreamist-messages.csv).csv"
+clean_message_csv_location = r"datasets/far-right/LIWC2015 Results (extreamist-messages-with-violent.csv).csv"
 
 dict_of_hashtag_count = {}
 
