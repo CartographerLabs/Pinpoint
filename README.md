@@ -14,7 +14,7 @@ Pinpoint is a suite of functionality for building a Gaussian classifier for the 
 ## Installation
 
 ```shell
-python -m pip install git+https://github.com/user1342/Pinpoint.git
+python -m pip install git+https://github.com/CartographerLabs/Pinpoint.git
 ```
 
 ## Datasets
