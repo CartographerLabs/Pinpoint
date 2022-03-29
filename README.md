@@ -67,3 +67,5 @@ model.train_model(features_file= r"outputs/training_features.json",
 model.create_model_info_output_file(location_of_output_file="outputs/far-right-baseline-output.txt",
                                     training_data_csv_location=r"outputs/training_features.json.csv")
   ```
+## Outputs
+Once trained and a model created it will be pickled and saved as a re-loadable file in the toolings ```output``` directory for future use. 
