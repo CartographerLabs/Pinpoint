@@ -68,4 +68,4 @@ model.create_model_info_output_file(location_of_output_file="outputs/far-right-b
                                     training_data_csv_location=r"outputs/training_features.json.csv")
   ```
 ## Outputs
-Once trained and a model created it will be pickled and saved as a re-loadable file in the toolings ```output``` directory for future use. 
+Once trained and a model created it will be pickled and saved as a re-loadable file in the tooling’s ```output``` directory for future use. In addition to this a text file is also created detailing the specifications and related accuracy scores of the created model - examples of these have been provided in the provided folder. 
