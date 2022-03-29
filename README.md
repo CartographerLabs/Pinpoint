@@ -8,7 +8,7 @@
 <p align="center"> 📍 Pinpoint is a suite of functionality for building and using a binary classifier for the identification of extremist content. 💻</p>
 
 # Pinpoint
-Pinpoint is a suite of functionality for building a Gaussian classifier for the identification of extremist content. This tooling builds off the methodology in the paper [Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith](https://arxiv.org/pdf/1905.08067.pdf)'
+Pinpoint is a suite of functionality for building a Gaussian classifier for the identification of far-right extremist content. This tooling builds off the methodology in the paper [Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith](https://arxiv.org/pdf/1905.08067.pdf)'
 .
 
 ## Installation
