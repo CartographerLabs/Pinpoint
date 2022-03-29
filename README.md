@@ -21,16 +21,16 @@ python -m pip install git+https://github.com/CartographerLabs/Pinpoint.git
 
 ### Parler dataset
 A dataset was acquired from [A Large Open Dataset from the Parler Social Network](https://zenodo.org/record/4442460). This dataset was further broken into two separate datasets using the [Log-Likelihood tooling](https://github.com/CartographerLabs/Parler-Toolbox) from the Parler Toolbox repository. For this, 100 posts in the dataset were manually marked as either violent extremist or non-extremist, and using the tooling a list of the top 30 keywords relating to violent-far-right extremism were identified. A subsection of these can be seen below:
-- genocidal
-- fire
-- destroyers
-- democraticnazi
-- fucker
-- tribunals
-- invoke
-- squad
-- punch
-- tyrannical
+- ```genocidal```
+- ```fire```
+- ```destroyers```
+- ```democraticnazi```
+- ```fucker```
+- ```tribunals```
+- ```invoke```
+- ```squad```
+- ```punch```
+- ```tyrannical```
 
 After these violent-extremist words were aggregated the dataset was split with text posts containing the keywords being marked as violent-far-right-extremist and those without marked as a baseline. After this text posts were converted to CSV and marked up with the [LIWC Text Analysis Engine](https://www.liwc.app/). 
 
