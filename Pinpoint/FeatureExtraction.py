@@ -1,10 +1,19 @@
+import ast
+import base64
+import codecs
 import csv
+import gc
 import json
 import os
+import pickle
 import re
-import uuid
+import shutil
+import time
 
+import easy_db
+import numpy
 import pandas as pd
+import uuid
 from scipy.spatial import distance
 
 from Pinpoint.Aggregator_NGram import n_gram_aggregator
@@ -14,7 +23,6 @@ from Pinpoint.Aggregator_WordingChoice import wording_choice_aggregator
 from Pinpoint.Grapher import grapher
 from Pinpoint.Logger import logger
 from Pinpoint.Sanitizer import sanitization, sys
-from Pinpoint.Twitter_api import Twitter
 
 
 class feature_extraction():
@@ -45,24 +53,24 @@ class feature_extraction():
     # Used for knowing which columns to access data from. For Twitter data.
     # Summary variables
     DEFAULT_USERNAME_COLUMN_ID = 0
-    DEFAULT_MESSAGE_COLUMN_ID = 1
-    DEFAULT_ANALYTIC_COLUMN_ID = 3
-    DEFAULT_CLOUT_COLUMN_ID = 4
-    DEFAULT_AUTHENTIC_COLUMN_ID = 5
-    DEFAULT_TONE_COLUMN_ID = 6
+    DEFAULT_MESSAGE_COLUMN_ID = 2
+    DEFAULT_ANALYTIC_COLUMN_ID = 4
+    DEFAULT_CLOUT_COLUMN_ID = 5
+    DEFAULT_AUTHENTIC_COLUMN_ID = 6
+    DEFAULT_TONE_COLUMN_ID = 7
     # Emotional Analysis
-    DEFAULT_ANGER_COLUMN_ID = 35
-    DEFAULT_SADNESS_COLUMN_ID = 36
-    DEFAULT_ANXIETY_COLUMN_ID = 34
+    DEFAULT_ANGER_COLUMN_ID = 36
+    DEFAULT_SADNESS_COLUMN_ID = 37
+    DEFAULT_ANXIETY_COLUMN_ID = 35
     # Personal Drives:
-    DEFAULT_POWER_COLUMN_ID = 61
-    DEFAULT_REWARD_COLUMN_ID = 62
-    DEFAULT_RISK_COLUMN_ID = 63
-    DEFAULT_ACHIEVEMENT_COLUMN_ID = 60
-    DEFAULT_AFFILIATION_COLUMN_ID = 59
+    DEFAULT_POWER_COLUMN_ID = 62
+    DEFAULT_REWARD_COLUMN_ID = 63
+    DEFAULT_RISK_COLUMN_ID = 64
+    DEFAULT_ACHIEVEMENT_COLUMN_ID = 61
+    DEFAULT_AFFILIATION_COLUMN_ID = 60
     # Personal pronouns
-    DEFAULT_P_PRONOUN_COLUMN_ID = 12
-    DEFAULT_I_PRONOUN_COLUMN_ID = 18
+    DEFAULT_P_PRONOUN_COLUMN_ID = 13
+    DEFAULT_I_PRONOUN_COLUMN_ID = 19
 
     # Constants for the fields in the baseline data set (i.e. ISIS magazine/ Stormfront, etc)
     DEFAULT_BASELINE_MESSAGE_COLUMN_ID = 5
@@ -100,6 +108,9 @@ class feature_extraction():
     average_affiliation = 0
     average_p_pronoun = 0
     average_i_pronoun = 0
+
+    # Used to chache messages to free memory
+    MESSAGE_TMP_CACHE_LOCATION = "message_cache"
 
     def __init__(self, violent_words_dataset_location=None
                  , baseline_training_dataset_location=None,
@@ -219,23 +230,6 @@ class feature_extraction():
         for hashtag in hashtags:
             self.graph.add_edge_wrapper(originating_user_name, hashtag, 1, "hashtag")
 
-    def _get_post_frequency(self, user_name):
-        """
-        A wrapper function used to return a given twitter users post frequency.
-        :param user_name:
-        :return: A given users post frequency
-        """
-
-        return Twitter().get_user_post_frequency(user_name)
-
-    def _get_follower_following_frequency(self, user_name):
-        """
-        A wrapper function used to retrieve the follower/ following frequency of a twitter user
-        :param user_name:
-        :return: returns the follower/ following frequency for a iven twitter user
-        """
-        return Twitter().get_follower_following_frequency(user_name)
-
     def _get_capitalised_word_frequency(self, message):
         """
         A wrapper function for returning the frequency of capitalised words in a message.
@@ -316,13 +310,10 @@ class feature_extraction():
         """
         self._add_to_graph(user_name, message)
 
-        features_dict = {"post_freq": 0,
-                         # self.set_post_frequency(user_name), # todo post frequency data is not available in the dataset
-                         "follower_freq": 0,
-                         # self.set_follower_following_frequency(user_name), # todo post follow data is not available in the dataset
-                         "cap_freq": self._get_capitalised_word_frequency(message),
+        features_dict = {"cap_freq": self._get_capitalised_word_frequency(message),
                          "violent_freq": self._get_violent_word_frequency(message),
                          "message_vector": self._get_tweet_vector(message)}
+
 
         return features_dict
 
@@ -506,160 +497,229 @@ class feature_extraction():
         raise Exception(
             "No valid encoding provided for file: '{}'. Encodings provided: '{}'".format(location, list_of_encodings))
 
+    def _add_user_post_db_cache(self, user_id, dict_to_add):
+        """
+        Used to add data to the post message db cache used to free up memory.
+        """
+
+        if not os.path.isdir(self.MESSAGE_TMP_CACHE_LOCATION):
+            os.mkdir(self.MESSAGE_TMP_CACHE_LOCATION)
+
+        # Save file as pickle
+        file_name = "{}-{}.pickle".format(user_id,int(time.time()))
+        file_name = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION, file_name)
+        with open(file_name, 'wb') as pickle_handle:
+            pickle.dump({"description":"a temporery file used for saving memory",
+                         "data":dict_to_add}, pickle_handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def _get_user_post_db_cache(self, file_name):
+        """
+        Retrieves data from the cache database used to free up memory.
+        """
+        if not os.path.isdir(self.MESSAGE_TMP_CACHE_LOCATION):
+            raise Exception("Attempted to access temporery cache files before files are created")
+
+        if not os.path.isfile(file_name):
+            raise Exception("Attempted to access cache file {}, however, it does not exist".format(file_name))
+
+        with (open(file_name, "rb")) as openfile:
+            cache_data = pickle.load(openfile)
+
+        return cache_data["data"]
+
+    def _delete_user_post_db_cache(self):
+        if os.path.isdir(self.MESSAGE_TMP_CACHE_LOCATION):
+            shutil.rmtree(self.MESSAGE_TMP_CACHE_LOCATION)
+
     def _get_type_of_message_data(self, data_set_location, has_header=True, is_extremist=None):
+        # Ensure all temp files are deleted
+        self._delete_user_post_db_cache()
 
         # Counts the total rows in the CSV. Used for progress reporting.
-        with self.open_wrapper(data_set_location, 'r') as file:
-            row_count = sum(1 for row in file)
+        print("Starting entity count. Will count '{}'".format(self.MAX_RECORD_SIZE))
 
-        if row_count > self.MAX_RECORD_SIZE:
-            row_count = self.MAX_RECORD_SIZE
+        # Read one entry at a time
+        max_chunksize = 1
+        row_count = 0
 
-        # Loops through all rows in the dataset CSV file.
-        with self.open_wrapper(data_set_location, 'r') as file:
-            reader = csv.reader(file)
+        for chunk in pd.read_csv(data_set_location, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
-            current_processed_rows = 0
-            is_header = True
-            for row in reader:
-                current_processed_rows = current_processed_rows + 1
+            for row in chunk.iterrows():
+                row_count = row_count + 1
 
-                # Makes sure same number for each dataset
-                if current_processed_rows > self.MAX_RECORD_SIZE:
+                if row_count >= self.MAX_RECORD_SIZE:
                     break
 
-                # Skips the first entry, as it's the CSV header
-                if has_header and is_header:
-                    is_header = False
-                    continue
+            if row_count >= self.MAX_RECORD_SIZE:
+                break
 
-                # Retrieve username
+        print("Finished entity count. Count is: '{}'".format(row_count))
+
+        # Loops through all rows in the dataset CSV file.
+        current_processed_rows = 0
+        is_header = True
+
+        for chunk in pd.read_csv(data_set_location, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
+            row = chunk.values.tolist()[0]
+
+            # Makes sure same number for each dataset
+            if current_processed_rows > row_count:
+                break
+
+            # Skips the first entry, as it's the CSV header
+            if has_header and is_header:
+                is_header = False
+                continue
+
+            # Retrieve username
+            try:
                 username = row[self.DEFAULT_USERNAME_COLUMN_ID]
                 user_unique_id = self._get_unique_id_from_username(username)
+            except:
+                # if empty entry
+                continue
+            # Attempt to get LIWC scores from csv, if not present return 0's
+            try:
+                # Summary variables
+                clout = float(row[self.DEFAULT_CLOUT_COLUMN_ID])
+                analytic = float(row[self.DEFAULT_ANALYTIC_COLUMN_ID])
+                tone = float(row[self.DEFAULT_TONE_COLUMN_ID])
+                authentic = float(row[self.DEFAULT_AUTHENTIC_COLUMN_ID])
+                # Emotional Analysis
+                anger = float(row[self.DEFAULT_ANGER_COLUMN_ID])
+                sadness = float(row[self.DEFAULT_SADNESS_COLUMN_ID])
+                anxiety = float(row[self.DEFAULT_ANXIETY_COLUMN_ID])
+                # Personal Drives:
+                power = float(row[self.DEFAULT_POWER_COLUMN_ID])
+                reward = float(row[self.DEFAULT_REWARD_COLUMN_ID])
+                risk = float(row[self.DEFAULT_RISK_COLUMN_ID])
+                achievement = float(row[self.DEFAULT_ACHIEVEMENT_COLUMN_ID])
+                affiliation = float(row[self.DEFAULT_AFFILIATION_COLUMN_ID])
+                # Personal pronouns
+                i_pronoun = float(row[self.DEFAULT_I_PRONOUN_COLUMN_ID])
+                p_pronoun = float(row[self.DEFAULT_P_PRONOUN_COLUMN_ID])
 
-                # Attempt to get LIWC scores from csv, if not present return 0's
-                try:
-                    # Summary variables
-                    clout = float(row[self.DEFAULT_CLOUT_COLUMN_ID])
-                    analytic = float(row[self.DEFAULT_ANALYTIC_COLUMN_ID])
-                    tone = float(row[self.DEFAULT_TONE_COLUMN_ID])
-                    authentic = float(row[self.DEFAULT_AUTHENTIC_COLUMN_ID])
-                    # Emotional Analysis
-                    anger = float(row[self.DEFAULT_ANGER_COLUMN_ID])
-                    sadness = float(row[self.DEFAULT_SADNESS_COLUMN_ID])
-                    anxiety = float(row[self.DEFAULT_ANXIETY_COLUMN_ID])
-                    # Personal Drives:
-                    power = float(row[self.DEFAULT_POWER_COLUMN_ID])
-                    reward = float(row[self.DEFAULT_REWARD_COLUMN_ID])
-                    risk = float(row[self.DEFAULT_RISK_COLUMN_ID])
-                    achievement = float(row[self.DEFAULT_ACHIEVEMENT_COLUMN_ID])
-                    affiliation = float(row[self.DEFAULT_AFFILIATION_COLUMN_ID])
-                    # Personal pronouns
-                    i_pronoun = float(row[self.DEFAULT_I_PRONOUN_COLUMN_ID])
-                    p_pronoun = float(row[self.DEFAULT_P_PRONOUN_COLUMN_ID])
+            except:
+                # Summary variables
+                clout = 0
+                analytic = 0
+                tone = 0
+                authentic = 0
+                # Emotional Analysis
+                anger = 0
+                sadness = 0
+                anxiety = 0
+                # Personal Drives:
+                power = 0
+                reward = 0
+                risk = 0
+                achievement = 0
+                affiliation = 0
+                # Personal pronouns
+                i_pronoun = 0
+                p_pronoun = 0
 
-                except:
-                    # Summary variables
-                    clout = 0
-                    analytic = 0
-                    tone = 0
-                    authentic = 0
-                    # Emotional Analysis
-                    anger = 0
-                    sadness = 0
-                    anxiety = 0
-                    # Personal Drives:
-                    power = 0
-                    reward = 0
-                    risk = 0
-                    achievement = 0
-                    affiliation = 0
-                    # Personal pronouns
-                    i_pronoun = 0
-                    p_pronoun = 0
+            liwc_dict = {
+                "clout": clout,
+                "analytic": analytic,
+                "tone": tone,
+                "authentic": authentic,
+                "anger": anger,
+                "sadness": sadness,
+                "anxiety": anxiety,
+                "power": power,
+                "reward": reward,
+                "risk": risk,
+                "achievement": achievement,
+                "affiliation": affiliation,
+                "i_pronoun": i_pronoun,
+                "p_pronoun": p_pronoun,
+            }
 
-                liwc_dict = {
-                    "clout": clout,
-                    "analytic": analytic,
-                    "tone": tone,
-                    "authentic": authentic,
-                    "anger": anger,
-                    "sadness": sadness,
-                    "anxiety": anxiety,
-                    "power": power,
-                    "reward": reward,
-                    "risk": risk,
-                    "achievement": achievement,
-                    "affiliation": affiliation,
-                    "i_pronoun": i_pronoun,
-                    "p_pronoun": p_pronoun,
-                }
+            # Calculate minkowski distance
+            average_row = self._get_average_liwc_scores_for_baseline_data()
 
-                # Calculate minkowski distance
-                average_row = self._get_average_liwc_scores_for_baseline_data()
+            actual_row = [clout, analytic, tone, authentic,
+                          anger, sadness, anxiety,
+                          power, reward, risk, achievement, affiliation,
+                          p_pronoun, i_pronoun
+                          ]
 
-                actual_row = [clout, analytic, tone, authentic,
-                              anger, sadness, anxiety,
-                              power, reward, risk, achievement, affiliation,
-                              p_pronoun, i_pronoun
-                              ]
-
-                # TODO is this distance done correctly
+            try:
                 liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
+            except ValueError:
+                continue
 
-                # Retrieve Tweet for message
-                tweet = row[self.DEFAULT_MESSAGE_COLUMN_ID]
-                # todo current datasets don't support this feature
-                # todo followers = row[4]
-                # todo number_of_posts = row[5]
+            # Retrieve Tweet for message
+            tweet = str(row[self.DEFAULT_MESSAGE_COLUMN_ID])
 
-                # clean/ remove markup in dataset
-                tweet = tweet.replace("ENGLISH TRANSLATION:", "")
-                sanitised_message = sanitization().sanitize(tweet, self.outputs_location,
-                                                            force_new_data_and_dont_persisit=True)
+            # clean/ remove markup in dataset
+            sanitised_message = sanitization().sanitize(tweet, self.outputs_location,
+                                                        force_new_data_and_dont_persisit=True)
 
-                # If no message skip entry
-                if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
-                        sanitised_message.split(" ")) > 0:
-                    continue
+            # If no message skip entry
+            if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
+                    sanitised_message.split(" ")) > 0:
+                continue
 
-                # Process Tweet and save as dict
-                tweet_dict = self._process_tweet(user_unique_id, tweet, row)
+            # Process Tweet and save as dict
+            tweet_dict = self._process_tweet(user_unique_id, tweet, row)
 
-                # If the message vector is not 200 skip (meaning that a blank message was processed)
-                if not len(tweet_dict["message_vector"]) == 200:
-                    continue
+            # If the message vector is not 200 skip (meaning that a blank message was processed)
+            if not len(tweet_dict["message_vector"]) == 200:
+                continue
 
-                if is_extremist is not None:
-                    tweet_dict["is_extremist"] = is_extremist
+            if is_extremist is not None:
+                tweet_dict["is_extremist"] = is_extremist
 
-                # Merge liwc dict with tweet dict
-                tweet_dict = {**tweet_dict, **liwc_dict}
+            # Merge liwc dict with tweet dict
+            tweet_dict = {**tweet_dict, **liwc_dict}
 
-                self.tweet_user_features.append({user_unique_id: tweet_dict})
+            #tweet_dict["user_unique_id"]= user_unique_id
 
-                logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
-                                       .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
+            self._add_user_post_db_cache(user_unique_id, {user_unique_id: tweet_dict})
+            #self.tweet_user_features.append()
+            # TODO here save to cache json instead of list and graph
+
+            logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
+                                   .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
+            current_processed_rows = current_processed_rows + 1
+            print("Finished reading row")
 
         # Add the centrality (has to be done after all users are added to graph)
         completed_tweet_user_features = []
         # Loops through each item in the list which represents each message/ tweet
-        for entry in self.tweet_user_features:
+
+        # Loop through all data in cache file
+        for cached_message_file in os.listdir(self.MESSAGE_TMP_CACHE_LOCATION):
+            cached_message_file = os.fsdecode(cached_message_file)
+            cached_message_file = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION,cached_message_file)
+
+            # Only process pickle files
+            if not cached_message_file.endswith(".pickle"):
+                continue
+
+            print("Reading cache file: '{}'".format(cached_message_file))
+            cached_message_data = self._get_user_post_db_cache(cached_message_file)
             # Loops through the data in that tweet (Should only be one entry per tweet).
-            for user_id in entry:
+            for user_id in cached_message_data.keys():
                 updated_entry = {}
-                updated_entry[user_id] = entry[user_id]
+                updated_entry[user_id] = cached_message_data[user_id]
                 # Adds centrality
                 updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
                 logger().print_message(
                     "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
                 completed_tweet_user_features.append(updated_entry)
+                gc.collect()
                 break  # Only one entry per list
 
+
+        self._delete_user_post_db_cache()
         self.completed_tweet_user_features = self.completed_tweet_user_features + completed_tweet_user_features
         self.tweet_user_features = []
-        self.archived_graphs.append(self.graph)
+        #self.archived_graphs.append(self.graph)
         self.graph = grapher()
+        print("Finished messages")
 
     def _get_extremist_data(self, dataset_location):
         """
@@ -723,8 +783,11 @@ class feature_extraction():
         self._reset_stored_feature_data()
 
         if force_new_dataset or not os.path.isfile(feature_file_path_to_save_to):
-            self._get_extremist_data(extremist_data_location)
+            print("Starting baseline messages")
             self._get_standard_tweets(baseline_data_location)
+            print("Starting extremist messages")
+            self._get_extremist_data(extremist_data_location)
+
 
             with open(feature_file_path_to_save_to, 'w') as outfile:
                 json.dump(self.completed_tweet_user_features, outfile, indent=4)

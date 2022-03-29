@@ -84,7 +84,7 @@ class random_forest():
                                                    "i_pronoun", "p_pronoun",
                                                    "minkowski"]
                 if self.BEHAVIOURAL_FEATURES_ENABLED:
-                    column_names = column_names + ['post_freq', 'follower_freq', 'centrality']
+                    column_names = column_names + ['centrality']
 
                 if self.RADICAL_LANGUAGE_ENABLED:
                     # Add column names
@@ -142,8 +142,8 @@ class random_forest():
                                 feature_dict["minkowski"] = message_features["minkowski"]
 
                             if self.BEHAVIOURAL_FEATURES_ENABLED:
-                                feature_dict['post_freq'] = message_features['post_freq']
-                                feature_dict['follower_freq'] = message_features['follower_freq']
+                                #feature_dict['post_freq'] = message_features['post_freq']
+                                #feature_dict['follower_freq'] = message_features['follower_freq']
                                 feature_dict['centrality'] = message_features['centrality']
 
                             if self.RADICAL_LANGUAGE_ENABLED:
@@ -195,11 +195,12 @@ class random_forest():
                                          reward, risk, achievement, affiliation, i_pronoun, p_pronoun, minkowski]
 
                         if self.BEHAVIOURAL_FEATURES_ENABLED:
-                            post_freq = feature_data['post_freq']
-                            follower_freq = feature_data['follower_freq']
+                            #post_freq = feature_data['post_freq']
+                            #follower_freq = feature_data['follower_freq']
                             centrality = feature_data['centrality']
 
-                            row = row + [post_freq, follower_freq, centrality]
+                            row = row + [#post_freq, follower_freq,
+                                         centrality]
 
                         if self.RADICAL_LANGUAGE_ENABLED:
                             cap_freq = feature_data['cap_freq']
@@ -317,9 +318,9 @@ class random_forest():
             X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)  # 80% training and 20% test
 
             # Create a Gaussian Classifier
-            random_forest = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True,
-                                         class_weight={0:5,1:1})  # A higher weight for the minority class (is_extreamist)
-                                        #TODO change back to 0:1, 1:5
+            random_forest = RandomForestClassifier(n_estimators=100, max_depth=50, oob_score=True
+                                         )  # class_weight={0:1,1:5} # A higher weight for the minority class (is_extreamist)
+
             # Train the model using the training sets y_pred=random_forest.predict(X_test)
             random_forest.fit(X_train, y_train.values.ravel())
 

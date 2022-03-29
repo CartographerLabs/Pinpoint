@@ -31,3 +31,5 @@ model.create_model_info_output_file(location_of_output_file="outputs/baseline-ou
 
 
 print("Finished")
+
+model.model.

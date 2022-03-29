@@ -1,0 +1,8 @@
+Model outputs/far-right-behavioural.model, version 0.2, created at 2022-01-18 
+
+Accuracy: 0.693084425709462
+Recall: 1.0 
+Precision: 0.6107019123223395
+F-Measure: 0.7583053172660834
+
+centrality: 1.0
