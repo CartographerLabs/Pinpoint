@@ -1,10 +1,11 @@
+| :warning: This repository is based on PhD research that seeks to identify radicalisation on online platforms. Due to this; text, themes, and content relating to far-right extremism are present in this repository. Please continue with care. :warning:   <br />  <br />  [Samaritans](www.samaritans.org) - Call 116 123 \| [ACT Early](act.campaign.gov.uk) \| [actearly.uk](actearly.uk) \| Prevent advice line 0800 011 3764|
+| --- |
+
 <p align="center">
     <img width=100% src="Pinpoint.png">
   </a>
 </p>
 <p align="center"> 📍 Pinpoint is a suite of functionality for building and using a binary classifier for the identification of extremist content. 💻</p>
-
-
 
 # Pinpoint
 Pinpoint is a suite of functionality for building a Gaussian classifier for the identification of extremist content. This tooling builds off the methodology in the paper [Radical Mind: Identifying Signals to Detect Extremist Content on Twitter by Mariam Nouh, Jason R.C. Nurse, and Michael Goldsmith](https://arxiv.org/pdf/1905.08067.pdf)'
@@ -18,23 +19,23 @@ python -m pip install git+https://github.com/user1342/Pinpoint.git
 
 ## Datasets
 
-### Baseline dataset (i.e. radical magazine or forum)
-A CSV file should be provided as the ```baseline_training_dataset_location``` paramiter. The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/).
+### Parler dataset
+A dataset was acquired from [A Large Open Dataset from the Parler Social Network](https://zenodo.org/record/4442460). This dataset was further broken into two separate datasets using the [Log-Likelihood tooling](https://github.com/CartographerLabs/Parler-Toolbox) from the Parler Toolbox repository. For this, 100 posts in the dataset were manually marked as either violent extremist or non-extremist, and using the tooling a list of the top 30 keywords relating to violent-far-right extremism were identified. A subsection of these can be seen below:
+- genocidal
+- fire
+- destroyers
+- democraticnazi
+- fucker
+- tribunals
+- invoke
+- squad
+- punch
+- tyrannical
 
-- Extremist magazine https://www.kaggle.com/fifthtribe/isis-religious-texts
+After these violent-extremist words were aggregated the dataset was split with text posts containing the keywords being marked as violent-far-right-extremist and those without marked as a baseline. After this text posts were converted to CSV and marked up with the [LIWC Text Analysis Engine](https://www.liwc.app/). 
 
-### Message data sets (i.e. radical tweets)
-CSV files should be proivded as the ```extremist_data_location``` and ```baseline_data_location``` paramiters respectively. The following datasets should be marked up using [LIWC](http://liwc.wpengine.com/).
-
-- Counterpoise Tweets https://www.kaggle.com/activegalaxy/isis-related-tweets/home?select=AboutIsis.csv
-- Extremist tweets https://www.kaggle.com/fifthtribe/how-isis-uses-twitter/data
-- Baseline Tweets https://www.kaggle.com/maxjon/complete-tweet-sentiment-extraction-data
-
-### Violent, extreamist, or curse word datasets
-Directory provided as the ```violent_words_dataset_location``` paramiter.
-
-- Violent / Swear words https://www.kaggle.com/highflyingbird/swear-words
-- Violent / Swear words https://www.kaggle.com/cfiszter/swear-word-list
+# Stormfront dataset
+The second dataset, used for developing a known radical corpus, was extracted from [Hate speech dataset from a white supremacist forum](https://github.com/Vicomtech/hate-speech-dataset) and converted to CSV format.
 
 ## Example Usage
 
