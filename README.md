@@ -34,7 +34,7 @@ A dataset was acquired from [A Large Open Dataset from the Parler Social Network
 
 After these violent-extremist words were aggregated the dataset was split with text posts containing the keywords being marked as violent-far-right-extremist and those without marked as a baseline. After this text posts were converted to CSV and marked up with the [LIWC Text Analysis Engine](https://www.liwc.app/). 
 
-# Stormfront dataset
+### Stormfront dataset
 The second dataset, used for developing a known radical corpus, was extracted from [Hate speech dataset from a white supremacist forum](https://github.com/Vicomtech/hate-speech-dataset) and converted to CSV format.
 
 ## Example Usage
