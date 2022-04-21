@@ -541,11 +541,13 @@ class feature_extraction():
         # Read one entry at a time
         max_chunksize = 1
         row_count = 0
-
-        if not has_header:
-            row_count = row_count+1
-
-        for chunk in pd.read_csv(data_set_location, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
+        
+        if has_header:
+            header = "infer"
+        else:
+            header = None
+        
+        for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
             for row in chunk.iterrows():
                 row_count = row_count + 1
@@ -561,11 +563,6 @@ class feature_extraction():
         # Loops through all rows in the dataset CSV file.
         current_processed_rows = 0
         is_header = has_header
-
-        if has_header:
-            header = "infer"
-        else:
-            header = None
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
             row = chunk.values.tolist()[0]
