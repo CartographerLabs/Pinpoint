@@ -10,7 +10,6 @@ import re
 import shutil
 import time
 
-import easy_db
 import numpy
 import pandas as pd
 import uuid
@@ -53,6 +52,7 @@ class feature_extraction():
     # Used for knowing which columns to access data from. For Twitter data.
     # Summary variables
     DEFAULT_USERNAME_COLUMN_ID = 0
+    DEFAULT_DATE_COLUMN_ID = 1
     DEFAULT_MESSAGE_COLUMN_ID = 2
     DEFAULT_ANALYTIC_COLUMN_ID = 4
     DEFAULT_CLOUT_COLUMN_ID = 5
@@ -542,6 +542,9 @@ class feature_extraction():
         max_chunksize = 1
         row_count = 0
 
+        if not has_header:
+            row_count = row_count+1
+
         for chunk in pd.read_csv(data_set_location, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
             for row in chunk.iterrows():
@@ -557,26 +560,35 @@ class feature_extraction():
 
         # Loops through all rows in the dataset CSV file.
         current_processed_rows = 0
-        is_header = True
+        is_header = has_header
 
-        for chunk in pd.read_csv(data_set_location, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
+        if has_header:
+            header = "infer"
+        else:
+            header = None
+
+        for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
             row = chunk.values.tolist()[0]
-
-            # Makes sure same number for each dataset
-            if current_processed_rows > row_count:
-                break
 
             # Skips the first entry, as it's the CSV header
             if has_header and is_header:
                 is_header = False
+                print("aa5")
                 continue
+
+            # Makes sure same number for each dataset
+            if current_processed_rows > row_count:
+                print("aa6")
+                break
 
             # Retrieve username
             try:
                 username = row[self.DEFAULT_USERNAME_COLUMN_ID]
+                date = row[self.DEFAULT_DATE_COLUMN_ID]
                 user_unique_id = self._get_unique_id_from_username(username)
             except:
                 # if empty entry
+                print("aa4")
                 continue
             # Attempt to get LIWC scores from csv, if not present return 0's
             try:
@@ -648,6 +660,7 @@ class feature_extraction():
             try:
                 liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
             except ValueError:
+                print("aa3")
                 continue
 
             # Retrieve Tweet for message
@@ -660,6 +673,7 @@ class feature_extraction():
             # If no message skip entry
             if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
                     sanitised_message.split(" ")) > 0:
+                print("aa1")
                 continue
 
             # Process Tweet and save as dict
@@ -667,10 +681,13 @@ class feature_extraction():
 
             # If the message vector is not 200 skip (meaning that a blank message was processed)
             if not len(tweet_dict["message_vector"]) == 200:
+                print("aa2")
                 continue
 
             if is_extremist is not None:
                 tweet_dict["is_extremist"] = is_extremist
+
+            tweet_dict["date"] = date
 
             # Merge liwc dict with tweet dict
             tweet_dict = {**tweet_dict, **liwc_dict}
@@ -716,18 +733,19 @@ class feature_extraction():
 
         self._delete_user_post_db_cache()
         self.completed_tweet_user_features = self.completed_tweet_user_features + completed_tweet_user_features
+
         self.tweet_user_features = []
         #self.archived_graphs.append(self.graph)
         self.graph = grapher()
         print("Finished messages")
 
-    def _get_extremist_data(self, dataset_location):
+    def _get_extremist_data(self, dataset_location, has_header = True):
         """
         This function is responsible for aggregating tweets from the extremist dataset, extracting the features, and
         saving them to a file for a model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=True)
+        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=True, has_header=has_header)
 
     def _get_counterpoise_data(self, dataset_location):
         """
@@ -738,13 +756,13 @@ class feature_extraction():
 
         self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False)
 
-    def _get_standard_tweets(self, dataset_location):
+    def _get_standard_tweets(self, dataset_location, has_header = True):
         """
         This function is responsible for aggregating tweets from the baseline (random sample of twitter posts)
         dataset, extracting the features, and saving them to a file for a model to be created.
         """
 
-        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False)
+        self._get_type_of_message_data(data_set_location=dataset_location, is_extremist=False, has_header=has_header)
 
     def dump_features_for_list_of_datasets(self, feature_file_path_to_save_to, list_of_dataset_locations,
                                            force_new_dataset=True):
