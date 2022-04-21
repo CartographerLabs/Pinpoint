@@ -338,6 +338,7 @@ class random_forest():
             Logger.logger.print_message("F-Measure: {}".format(self.f_measure), logging_level=1)
 
             self.model = random_forest
+
             self.original_name = model_location
             self.creation_date = datetime.today().strftime('%Y-%m-%d')
 
