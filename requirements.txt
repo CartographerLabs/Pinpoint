@@ -42,7 +42,7 @@ nltk==3.5
 notebook==6.1.5
 numpy==1.19.3
 packaging==20.4
-pandas==1.1.5
+pandas==1.4.2
 pandocfilters==1.4.3
 parso==0.7.1
 pickleshare==0.7.5
