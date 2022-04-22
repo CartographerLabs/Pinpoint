@@ -541,12 +541,10 @@ class feature_extraction():
         # Read one entry at a time
         max_chunksize = 1
 
-
+        header = "infer"
         if has_header:
-            header = "infer"
             row_count = 0
         else:
-            header = None
             row_count = 1
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
