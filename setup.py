@@ -6,7 +6,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="Pinpoint",
-    version="0.0.5",
+    version="0.0.6",
     author="James Stevenson",
     author_email="hi@jamesstevenson.me",
     description="A binary classification model designed for identifying extremist content on Twitter.",
