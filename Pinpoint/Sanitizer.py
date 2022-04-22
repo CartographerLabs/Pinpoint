@@ -7,7 +7,7 @@ from Pinpoint.Logger import *
 
 # If NLTK data doesn't exist, downloads it
 try:
-    tagged = pos_tag("test")
+    tagged = pos_tag(["test"])
 except LookupError:
     download()
 

@@ -25,7 +25,8 @@ class word_2_vec_aggregator():
 
         model = Word2Vec(min_count=1, window=5)  # vector size of 100 and window size of 5?
         model.build_vocab(list_of_sentences_in_nested_list)  # prepare the model vocabulary
+        model.model_trimmed_post_training = False
         model.train(list_of_sentences_in_nested_list, total_examples=model.corpus_count,
-                    epochs=model.iter)  # train word vectors
+                    epochs=model.epochs)  # train word vectors
 
         return model
