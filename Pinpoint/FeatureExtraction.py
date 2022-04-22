@@ -565,7 +565,7 @@ class feature_extraction():
         current_processed_rows = 0
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
-            for row in chunk.iterrows():
+            for row in chunk.values.tolist():
 
                 # Makes sure same number for each dataset
                 if current_processed_rows > row_count:
@@ -689,32 +689,32 @@ class feature_extraction():
                 current_processed_rows = current_processed_rows + 1
                 print("Finished reading row")
 
-            # Add the centrality (has to be done after all users are added to graph)
-            completed_tweet_user_features = []
-            # Loops through each item in the list which represents each message/ tweet
+        # Add the centrality (has to be done after all users are added to graph)
+        completed_tweet_user_features = []
+        # Loops through each item in the list which represents each message/ tweet
 
-            # Loop through all data in cache file
-            for cached_message_file in os.listdir(self.MESSAGE_TMP_CACHE_LOCATION):
-                cached_message_file = os.fsdecode(cached_message_file)
-                cached_message_file = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION,cached_message_file)
+        # Loop through all data in cache file
+        for cached_message_file in os.listdir(self.MESSAGE_TMP_CACHE_LOCATION):
+            cached_message_file = os.fsdecode(cached_message_file)
+            cached_message_file = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION,cached_message_file)
 
-                # Only process pickle files
-                if not cached_message_file.endswith(".pickle"):
-                    continue
+            # Only process pickle files
+            if not cached_message_file.endswith(".pickle"):
+                continue
 
-                print("Reading cache file: '{}'".format(cached_message_file))
-                cached_message_data = self._get_user_post_db_cache(cached_message_file)
-                # Loops through the data in that tweet (Should only be one entry per tweet).
-                for user_id in cached_message_data.keys():
-                    updated_entry = {}
-                    updated_entry[user_id] = cached_message_data[user_id]
-                    # Adds centrality
-                    updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
-                    logger().print_message(
-                        "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
-                    completed_tweet_user_features.append(updated_entry)
-                    gc.collect()
-                    break  # Only one entry per list
+            print("Reading cache file: '{}'".format(cached_message_file))
+            cached_message_data = self._get_user_post_db_cache(cached_message_file)
+            # Loops through the data in that tweet (Should only be one entry per tweet).
+            for user_id in cached_message_data.keys():
+                updated_entry = {}
+                updated_entry[user_id] = cached_message_data[user_id]
+                # Adds centrality
+                updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
+                logger().print_message(
+                    "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
+                completed_tweet_user_features.append(updated_entry)
+                gc.collect()
+                break  # Only one entry per list
 
 
         self._delete_user_post_db_cache()
