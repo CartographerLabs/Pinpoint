@@ -541,12 +541,12 @@ class feature_extraction():
         # Read one entry at a time
         max_chunksize = 1
         row_count = 0
-        
+
         if has_header:
             header = "infer"
         else:
             header = None
-        
+
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
             for row in chunk.iterrows():
@@ -567,15 +567,8 @@ class feature_extraction():
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
             row = chunk.values.tolist()[0]
 
-            # Skips the first entry, as it's the CSV header
-            if has_header and is_header:
-                is_header = False
-                print("aa5")
-                continue
-
             # Makes sure same number for each dataset
             if current_processed_rows > row_count:
-                print("aa6")
                 break
 
             # Retrieve username
@@ -585,7 +578,6 @@ class feature_extraction():
                 user_unique_id = self._get_unique_id_from_username(username)
             except:
                 # if empty entry
-                print("aa4")
                 continue
             # Attempt to get LIWC scores from csv, if not present return 0's
             try:
@@ -657,7 +649,6 @@ class feature_extraction():
             try:
                 liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
             except ValueError:
-                print("aa3")
                 continue
 
             # Retrieve Tweet for message
@@ -670,7 +661,6 @@ class feature_extraction():
             # If no message skip entry
             if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
                     sanitised_message.split(" ")) > 0:
-                print("aa1")
                 continue
 
             # Process Tweet and save as dict
@@ -678,7 +668,6 @@ class feature_extraction():
 
             # If the message vector is not 200 skip (meaning that a blank message was processed)
             if not len(tweet_dict["message_vector"]) == 200:
-                print("aa2")
                 continue
 
             if is_extremist is not None:
