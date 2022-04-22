@@ -565,156 +565,156 @@ class feature_extraction():
         current_processed_rows = 0
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
-            row = chunk.values.tolist()[0]
+            for row in chunk.iterrows():
 
-            # Makes sure same number for each dataset
-            if current_processed_rows > row_count:
-                break
+                # Makes sure same number for each dataset
+                if current_processed_rows > row_count:
+                    break
 
-            # Retrieve username
-            try:
-                username = row[self.DEFAULT_USERNAME_COLUMN_ID]
-                date = row[self.DEFAULT_DATE_COLUMN_ID]
-                user_unique_id = self._get_unique_id_from_username(username)
-            except:
-                # if empty entry
-                continue
-            # Attempt to get LIWC scores from csv, if not present return 0's
-            try:
-                # Summary variables
-                clout = float(row[self.DEFAULT_CLOUT_COLUMN_ID])
-                analytic = float(row[self.DEFAULT_ANALYTIC_COLUMN_ID])
-                tone = float(row[self.DEFAULT_TONE_COLUMN_ID])
-                authentic = float(row[self.DEFAULT_AUTHENTIC_COLUMN_ID])
-                # Emotional Analysis
-                anger = float(row[self.DEFAULT_ANGER_COLUMN_ID])
-                sadness = float(row[self.DEFAULT_SADNESS_COLUMN_ID])
-                anxiety = float(row[self.DEFAULT_ANXIETY_COLUMN_ID])
-                # Personal Drives:
-                power = float(row[self.DEFAULT_POWER_COLUMN_ID])
-                reward = float(row[self.DEFAULT_REWARD_COLUMN_ID])
-                risk = float(row[self.DEFAULT_RISK_COLUMN_ID])
-                achievement = float(row[self.DEFAULT_ACHIEVEMENT_COLUMN_ID])
-                affiliation = float(row[self.DEFAULT_AFFILIATION_COLUMN_ID])
-                # Personal pronouns
-                i_pronoun = float(row[self.DEFAULT_I_PRONOUN_COLUMN_ID])
-                p_pronoun = float(row[self.DEFAULT_P_PRONOUN_COLUMN_ID])
+                # Retrieve username
+                try:
+                    username = row[self.DEFAULT_USERNAME_COLUMN_ID]
+                    date = row[self.DEFAULT_DATE_COLUMN_ID]
+                    user_unique_id = self._get_unique_id_from_username(username)
+                except:
+                    # if empty entry
+                    continue
+                # Attempt to get LIWC scores from csv, if not present return 0's
+                try:
+                    # Summary variables
+                    clout = float(row[self.DEFAULT_CLOUT_COLUMN_ID])
+                    analytic = float(row[self.DEFAULT_ANALYTIC_COLUMN_ID])
+                    tone = float(row[self.DEFAULT_TONE_COLUMN_ID])
+                    authentic = float(row[self.DEFAULT_AUTHENTIC_COLUMN_ID])
+                    # Emotional Analysis
+                    anger = float(row[self.DEFAULT_ANGER_COLUMN_ID])
+                    sadness = float(row[self.DEFAULT_SADNESS_COLUMN_ID])
+                    anxiety = float(row[self.DEFAULT_ANXIETY_COLUMN_ID])
+                    # Personal Drives:
+                    power = float(row[self.DEFAULT_POWER_COLUMN_ID])
+                    reward = float(row[self.DEFAULT_REWARD_COLUMN_ID])
+                    risk = float(row[self.DEFAULT_RISK_COLUMN_ID])
+                    achievement = float(row[self.DEFAULT_ACHIEVEMENT_COLUMN_ID])
+                    affiliation = float(row[self.DEFAULT_AFFILIATION_COLUMN_ID])
+                    # Personal pronouns
+                    i_pronoun = float(row[self.DEFAULT_I_PRONOUN_COLUMN_ID])
+                    p_pronoun = float(row[self.DEFAULT_P_PRONOUN_COLUMN_ID])
 
-            except:
-                # Summary variables
-                clout = 0
-                analytic = 0
-                tone = 0
-                authentic = 0
-                # Emotional Analysis
-                anger = 0
-                sadness = 0
-                anxiety = 0
-                # Personal Drives:
-                power = 0
-                reward = 0
-                risk = 0
-                achievement = 0
-                affiliation = 0
-                # Personal pronouns
-                i_pronoun = 0
-                p_pronoun = 0
+                except:
+                    # Summary variables
+                    clout = 0
+                    analytic = 0
+                    tone = 0
+                    authentic = 0
+                    # Emotional Analysis
+                    anger = 0
+                    sadness = 0
+                    anxiety = 0
+                    # Personal Drives:
+                    power = 0
+                    reward = 0
+                    risk = 0
+                    achievement = 0
+                    affiliation = 0
+                    # Personal pronouns
+                    i_pronoun = 0
+                    p_pronoun = 0
 
-            liwc_dict = {
-                "clout": clout,
-                "analytic": analytic,
-                "tone": tone,
-                "authentic": authentic,
-                "anger": anger,
-                "sadness": sadness,
-                "anxiety": anxiety,
-                "power": power,
-                "reward": reward,
-                "risk": risk,
-                "achievement": achievement,
-                "affiliation": affiliation,
-                "i_pronoun": i_pronoun,
-                "p_pronoun": p_pronoun,
-            }
+                liwc_dict = {
+                    "clout": clout,
+                    "analytic": analytic,
+                    "tone": tone,
+                    "authentic": authentic,
+                    "anger": anger,
+                    "sadness": sadness,
+                    "anxiety": anxiety,
+                    "power": power,
+                    "reward": reward,
+                    "risk": risk,
+                    "achievement": achievement,
+                    "affiliation": affiliation,
+                    "i_pronoun": i_pronoun,
+                    "p_pronoun": p_pronoun,
+                }
 
-            # Calculate minkowski distance
-            average_row = self._get_average_liwc_scores_for_baseline_data()
+                # Calculate minkowski distance
+                average_row = self._get_average_liwc_scores_for_baseline_data()
 
-            actual_row = [clout, analytic, tone, authentic,
-                          anger, sadness, anxiety,
-                          power, reward, risk, achievement, affiliation,
-                          p_pronoun, i_pronoun
-                          ]
+                actual_row = [clout, analytic, tone, authentic,
+                              anger, sadness, anxiety,
+                              power, reward, risk, achievement, affiliation,
+                              p_pronoun, i_pronoun
+                              ]
 
-            try:
-                liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
-            except ValueError:
-                continue
+                try:
+                    liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
+                except ValueError:
+                    continue
 
-            # Retrieve Tweet for message
-            tweet = str(row[self.DEFAULT_MESSAGE_COLUMN_ID])
+                # Retrieve Tweet for message
+                tweet = str(row[self.DEFAULT_MESSAGE_COLUMN_ID])
 
-            # clean/ remove markup in dataset
-            sanitised_message = sanitization().sanitize(tweet, self.outputs_location,
-                                                        force_new_data_and_dont_persisit=True)
+                # clean/ remove markup in dataset
+                sanitised_message = sanitization().sanitize(tweet, self.outputs_location,
+                                                            force_new_data_and_dont_persisit=True)
 
-            # If no message skip entry
-            if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
-                    sanitised_message.split(" ")) > 0:
-                continue
+                # If no message skip entry
+                if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
+                        sanitised_message.split(" ")) > 0:
+                    continue
 
-            # Process Tweet and save as dict
-            tweet_dict = self._process_tweet(user_unique_id, tweet, row)
+                # Process Tweet and save as dict
+                tweet_dict = self._process_tweet(user_unique_id, tweet, row)
 
-            # If the message vector is not 200 skip (meaning that a blank message was processed)
-            if not len(tweet_dict["message_vector"]) == 200:
-                continue
+                # If the message vector is not 200 skip (meaning that a blank message was processed)
+                if not len(tweet_dict["message_vector"]) == 200:
+                    continue
 
-            if is_extremist is not None:
-                tweet_dict["is_extremist"] = is_extremist
+                if is_extremist is not None:
+                    tweet_dict["is_extremist"] = is_extremist
 
-            tweet_dict["date"] = date
+                tweet_dict["date"] = date
 
-            # Merge liwc dict with tweet dict
-            tweet_dict = {**tweet_dict, **liwc_dict}
+                # Merge liwc dict with tweet dict
+                tweet_dict = {**tweet_dict, **liwc_dict}
 
-            #tweet_dict["user_unique_id"]= user_unique_id
+                #tweet_dict["user_unique_id"]= user_unique_id
 
-            self._add_user_post_db_cache(user_unique_id, {user_unique_id: tweet_dict})
-            #self.tweet_user_features.append()
-            # TODO here save to cache json instead of list and graph
+                self._add_user_post_db_cache(user_unique_id, {user_unique_id: tweet_dict})
+                #self.tweet_user_features.append()
+                # TODO here save to cache json instead of list and graph
 
-            logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
-                                   .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
-            current_processed_rows = current_processed_rows + 1
-            print("Finished reading row")
+                logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
+                                       .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
+                current_processed_rows = current_processed_rows + 1
+                print("Finished reading row")
 
-        # Add the centrality (has to be done after all users are added to graph)
-        completed_tweet_user_features = []
-        # Loops through each item in the list which represents each message/ tweet
+            # Add the centrality (has to be done after all users are added to graph)
+            completed_tweet_user_features = []
+            # Loops through each item in the list which represents each message/ tweet
 
-        # Loop through all data in cache file
-        for cached_message_file in os.listdir(self.MESSAGE_TMP_CACHE_LOCATION):
-            cached_message_file = os.fsdecode(cached_message_file)
-            cached_message_file = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION,cached_message_file)
+            # Loop through all data in cache file
+            for cached_message_file in os.listdir(self.MESSAGE_TMP_CACHE_LOCATION):
+                cached_message_file = os.fsdecode(cached_message_file)
+                cached_message_file = os.path.join(self.MESSAGE_TMP_CACHE_LOCATION,cached_message_file)
 
-            # Only process pickle files
-            if not cached_message_file.endswith(".pickle"):
-                continue
+                # Only process pickle files
+                if not cached_message_file.endswith(".pickle"):
+                    continue
 
-            print("Reading cache file: '{}'".format(cached_message_file))
-            cached_message_data = self._get_user_post_db_cache(cached_message_file)
-            # Loops through the data in that tweet (Should only be one entry per tweet).
-            for user_id in cached_message_data.keys():
-                updated_entry = {}
-                updated_entry[user_id] = cached_message_data[user_id]
-                # Adds centrality
-                updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
-                logger().print_message(
-                    "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
-                completed_tweet_user_features.append(updated_entry)
-                gc.collect()
-                break  # Only one entry per list
+                print("Reading cache file: '{}'".format(cached_message_file))
+                cached_message_data = self._get_user_post_db_cache(cached_message_file)
+                # Loops through the data in that tweet (Should only be one entry per tweet).
+                for user_id in cached_message_data.keys():
+                    updated_entry = {}
+                    updated_entry[user_id] = cached_message_data[user_id]
+                    # Adds centrality
+                    updated_entry[user_id]["centrality"] = self.graph.get_degree_centrality_for_user(user_id)
+                    logger().print_message(
+                        "Added '{}' Centrality for user '{}'".format(updated_entry[user_id]["centrality"], user_id), 1)
+                    completed_tweet_user_features.append(updated_entry)
+                    gc.collect()
+                    break  # Only one entry per list
 
 
         self._delete_user_post_db_cache()
