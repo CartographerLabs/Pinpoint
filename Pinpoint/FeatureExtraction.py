@@ -573,7 +573,7 @@ class feature_extraction():
         is_header = has_header
 
         iter = 0
-        for chunk in pd.read_csv(data_set_location, header=None, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
+        for chunk in pd.read_csv(data_set_location, header=None, chunksize=max_chunksize,encoding='latin-1'):
             print("start {}".format(iter))
 
             row = chunk.values.tolist()[0]
