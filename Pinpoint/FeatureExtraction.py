@@ -540,14 +540,14 @@ class feature_extraction():
 
         # Read one entry at a time
         max_chunksize = 1
+        row_count = 0
 
-        header = "infer"
+
         if has_header:
-            row_count = 0
+            header = "infer"
         else:
             header = None
-            row_count = 1
-            
+
         is_header = has_header
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
@@ -569,9 +569,10 @@ class feature_extraction():
 
         # Loops through all rows in the dataset CSV file.
         current_processed_rows = 0
-        
+
         is_header = has_header
         
+        iter = 0
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
             if is_header:
@@ -701,7 +702,8 @@ class feature_extraction():
                                    .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
             current_processed_rows = current_processed_rows + 1
             print("Finished reading row")
-
+            print("iter is {}".format(iter))
+            iter= iter+1
         # Add the centrality (has to be done after all users are added to graph)
         completed_tweet_user_features = []
         # Loops through each item in the list which represents each message/ tweet
