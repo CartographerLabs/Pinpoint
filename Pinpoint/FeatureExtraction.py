@@ -546,7 +546,7 @@ class feature_extraction():
             row_count = 0
         else:
             header = None
-            row_count = 1
+            row_count = 0
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
@@ -565,10 +565,11 @@ class feature_extraction():
         current_processed_rows = 0
 
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
+
             for row in chunk.values.tolist():
 
                 # Makes sure same number for each dataset
-                if current_processed_rows > row_count:
+                if current_processed_rows >= row_count:
                     break
 
                 # Retrieve username
