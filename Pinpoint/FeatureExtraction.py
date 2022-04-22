@@ -575,9 +575,6 @@ class feature_extraction():
         iter = 0
         for chunk in pd.read_csv(data_set_location, header="infer", chunksize=max_chunksize, iterator=True,encoding='latin-1'):
             print("start {}".format(iter))
-            if is_header:
-                is_header = False
-                continue
 
             row = chunk.values.tolist()[0]
 
@@ -703,9 +700,10 @@ class feature_extraction():
             #self.tweet_user_features.append()
             # TODO here save to cache json instead of list and graph
 
+
+            current_processed_rows = current_processed_rows + 1
             logger().print_message("Added message from user: '{}', from dataset: '{}'. {} rows of {} completed."
                                    .format(user_unique_id, data_set_location, current_processed_rows, row_count), 1)
-            current_processed_rows = current_processed_rows + 1
             print("Finished reading row")
             print("iter is {}".format(iter))
             iter= iter+1
