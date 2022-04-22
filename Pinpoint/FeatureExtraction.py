@@ -571,7 +571,7 @@ class feature_extraction():
         current_processed_rows = 0
 
         is_header = has_header
-        
+
         iter = 0
         for chunk in pd.read_csv(data_set_location, header=header, chunksize=max_chunksize, iterator=True,encoding='latin-1'):
 
@@ -583,6 +583,7 @@ class feature_extraction():
 
             # Makes sure same number for each dataset
             if current_processed_rows > row_count:
+                print("test 1")
                 break
 
             # Retrieve username
@@ -591,6 +592,7 @@ class feature_extraction():
                 date = row[self.DEFAULT_DATE_COLUMN_ID]
                 user_unique_id = self._get_unique_id_from_username(username)
             except:
+                print("test 2")
                 # if empty entry
                 continue
             # Attempt to get LIWC scores from csv, if not present return 0's
@@ -663,6 +665,7 @@ class feature_extraction():
             try:
                 liwc_dict["minkowski"] = distance.minkowski(actual_row, average_row, 1)
             except ValueError:
+                print("test 3")
                 continue
 
             # Retrieve Tweet for message
@@ -675,6 +678,7 @@ class feature_extraction():
             # If no message skip entry
             if not len(tweet) > 0 or not len(sanitised_message) > 0 or sanitised_message == '' or not len(
                     sanitised_message.split(" ")) > 0:
+                print("test 4")
                 continue
 
             # Process Tweet and save as dict
@@ -682,6 +686,7 @@ class feature_extraction():
 
             # If the message vector is not 200 skip (meaning that a blank message was processed)
             if not len(tweet_dict["message_vector"]) == 200:
+                print("test 5")
                 continue
 
             if is_extremist is not None:
@@ -715,6 +720,7 @@ class feature_extraction():
 
             # Only process pickle files
             if not cached_message_file.endswith(".pickle"):
+                print("test 6")
                 continue
 
             print("Reading cache file: '{}'".format(cached_message_file))
